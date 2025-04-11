@@ -17,7 +17,7 @@ import pytesseract
 import io
 import openai
 
-openai.api_key = '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'
+
 
 def extract_metadata(file):
     filename = file.filename

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash,current_app
 from flask_cors import CORS
 from web3 import Web3
 import os
@@ -2375,7 +2375,7 @@ def view_metadata():
                         summaries.append(f"{record['filename']}: {summary_text}")
                         
                         # Collect medical summaries separately
-                        if record['category'] in ['Prescription', 'Doctor Notes', 'Diagnostic Report']:
+                        if record['category'] in ['Prescription', 'Doctor Notes', 'Diagnostic Report', 'Scanning/Lab Reports', '']:
                             medical_summaries.append(summary_text)
             except:
                 # If not valid JSON, keep as is
@@ -2386,7 +2386,7 @@ def view_metadata():
         # Generate overall summary
         summary = "This collection contains " + str(len(records)) + " records. "
         if summaries:
-            summary += "Key documents include: " + "; ".join(summaries[:3])
+            summary += "Key documents include: " + "; ".join(summaries[:])
             if len(summaries) > 3:
                 summary += f"; and {len(summaries) - 3} more documents."
         
@@ -2415,7 +2415,7 @@ def view_metadata():
                 You are an emergency health data synthesizer. Based on the following medical records, 
                 create a concise summary (2-3 sentences) that would be essential for paramedics or 
                 emergency health assessors. Focus on current medications, critical conditions, allergies, 
-                and recent test results. Format the information in bullet points.
+                and recent test results. Format the information in bullet points. Do not ignore any disease, symptoms or detections small or big like malaria etc
                 
                 Medical records:
                 """ + "\n".join(medical_summaries)
@@ -2439,6 +2439,119 @@ def view_metadata():
     finally:
         conn.close()
 
+
+@app.route('/visualisation')
+def visualisation():
+    current_app.logger.info("Starting visualization route")
+    body_parts = [
+        'head', 'orbit', 'neck', 'chest', 'right-shoulder', 'right-arm',
+        'right-hand', 'left-shoulder', 'left-arm', 'left-hand', 'abdomen',
+        'right-leg', 'right-foot', 'left-leg', 'left-foot'
+    ]
+    
+    try:
+        conn = get_db_connection()
+        if not conn:
+            current_app.logger.error("Failed to establish DB connection")
+            flash('Unable to connect to database', 'error')
+            return redirect(url_for('index'))
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, filename, category, timestamp, metdata
+                FROM metadata_record
+                ORDER BY timestamp DESC
+            ''')
+            
+            records = []
+            medical_summaries = []
+            
+            for row in cursor.fetchall():
+                record = {
+                    'id': row[0],
+                    'filename': row[1],
+                    'category': row[2],
+                    'timestamp': row[3],
+                    'metadata': {}
+                }
+                
+                try:
+                    if row[4]:
+                        metadata_json = json.loads(row[4])
+                        record['metadata'] = metadata_json
+                        
+                        if record['category'] in [
+                            'Prescription', 'Doctor Notes', 'Diagnostic Report',
+                            'Scanning/Lab Reports', 'High Priority Notes'
+                        ] and 'summary' in metadata_json:
+                            medical_summaries.append(metadata_json['summary'])
+                except json.JSONDecodeError:
+                    current_app.logger.warning(f"Invalid JSON for record {row[0]}")
+                
+                records.append(record)
+
+            current_app.logger.info(f"Collected {len(medical_summaries)} summaries")
+
+            affected_parts = []
+            if medical_summaries:
+                try:
+                    genai.configure(api_key="AIzaSyCBt1P_Hr9RK4-P6e872pjbUoXCObGlO6U")
+
+                    generation_config = {
+                        "temperature": 0.2,
+                        "top_p": 0.8,
+                        "top_k": 40,
+                        "max_output_tokens": 300
+                    }
+
+                    model = genai.GenerativeModel(
+                        model_name="gemini-1.5-flash",
+                        generation_config=generation_config
+                    )
+
+                    # Prompt for Gemini
+                    prompt = f"""
+                    From the following medical summaries, identify which human body parts are affected.
+                    Use this exact list of IDs only if you find any mention of issues in those parts: 
+                    {body_parts}.
+                    
+                    Respond ONLY with a Python list of the affected part IDs. No explanation, no extra text.
+                    
+                    Medical summaries:
+                    {medical_summaries}
+                    """
+
+                    response = model.generate_content(prompt)
+                    current_app.logger.info("Gemini response received")
+
+                    # Safely evaluate list from string
+                    from ast import literal_eval
+                    affected_parts = literal_eval(response.text.strip())
+
+                except Exception as e:
+                    current_app.logger.error(f"Gemini Error: {e}")
+                    affected_parts = []
+
+            # Render final result
+            return render_template(
+                'visualisation.html',
+                records=records,
+                affected_parts=affected_parts
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Query error: {e}")
+            flash('Error fetching data', 'error')
+            return redirect(url_for('index'))
+
+        finally:
+            conn.close()
+    
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error: {e}")
+        flash('Unexpected error occurred', 'error')
+        return redirect(url_for('index'))
 
 
 
