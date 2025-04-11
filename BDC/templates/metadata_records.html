@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Records</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+        }
+        .sidebar {
+            background-color: #2c3e50;
+            color: white;
+            width: 200px;
+            position: fixed;
+            height: 100%;
+            padding-top: 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 0;
+        }
+        .nav-links li {
+            padding: 10px 20px;
+        }
+        .nav-links li.active {
+            background-color: #34495e;
+        }
+        .nav-links li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        .main-content {
+            margin-left: 200px;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .table-container {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        .metadata-content {
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .view-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .view-btn:hover {
+            background-color: #2980b9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .summary-container {
+    background-color: white;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.metadata-summary {
+    line-height: 1.6;
+    color: #333;
+}
+        .full-metadata {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 3px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlocDoc</div>
+        <ul class="nav-links">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="/verify_face_page">Public Files/Docs</a></li>
+            <li class="active"><a href="/view_metadata">Metadata Records</a></li>
+            <li><a href="/">Logout</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/visualisation">Visualisation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Metadata Records</h1>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search records..." onkeyup="searchTable()">
+        </div>
+
+        <div class="summary-container">
+            <h2>Summary Overview</h2>
+            <div class="metadata-summary">
+                {{ summary }}
+            </div>
+            <div class="qr-container" style="background-color: white; border-radius: 5px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); display: flex; align-items: flex-start;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Emergency QR Code</h3>
+                    <div id="qrcode" style="padding: 10px; background-color: white; border: 1px solid #eee;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="metadataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Filename</th>
+                        <th>Category</th>
+                        <th>Timestamp</th>
+                        <th>Metadata Preview</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record.id }}</td>
+                        <td>{{ record.filename }}</td>
+                        <td>{{ record.category }}</td>
+                        <td>{{ record.timestamp }}</td>
+                        <td>
+                            <div class="metadata-content">
+                                {% if record.metadata | length > 150 %}
+                                    {{ record.metadata[:150] }}...
+                                {% else %}
+                                    {{ record.metadata }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for viewing full metadata -->
+    <div id="metadataModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Metadata Details</h2>
+            <p><strong>Filename:</strong> <span id="modalFilename"></span></p>
+            <h3>Full Metadata:</h3>
+            <div id="modalMetadata" class="full-metadata"></div>
+        </div>
+    </div>
+
+    <script>
+        function searchTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById('metadataTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                let show = false;
+                const cells = rows[i].getElementsByTagName('td');
+                
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent || cells[j].innerText;
+                    if (cellText.toUpperCase().indexOf(filter) > -1) {
+                        show = true;
+                        break;
+                    }
+                }
+                
+                rows[i].style.display = show ? '' : 'none';
+            }
+        }
+
+        function viewFullMetadata(id, filename, metadata) {
+            document.getElementById('modalTitle').textContent = `Metadata Details (ID: ${id})`;
+            document.getElementById('modalFilename').textContent = filename;
+            
+            // Format metadata as pretty JSON if it's valid JSON
+            try {
+                const metadataObj = typeof metadata === 'object' ? metadata : JSON.parse(metadata);
+                document.getElementById('modalMetadata').textContent = JSON.stringify(metadataObj, null, 2);
+            } catch (e) {
+                // If not valid JSON, display as is
+                document.getElementById('modalMetadata').textContent = metadata;
+            }
+            
+            document.getElementById('metadataModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('metadataModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('metadataModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+
+    </script>
+    <script>
+        // Generate QR code when page loads
+        window.addEventListener('load', function() {
+            // Get summary content
+            const summaryElement = document.querySelector('.metadata-summary');
+            
+            if (summaryElement) {
+                const summaryContent = summaryElement.textContent.trim();
+                
+                // Create QR code with higher error correction level
+                const qr = qrcode(0, 'L');
+                qr.addData(summaryContent);
+                qr.make();
+                
+                // Create QR code as SVG (more reliable for scanning) - smaller size
+                const svgString = qr.createSvgTag({
+                    cellSize: 5,  // Smaller cell size for a smaller QR code
+                    margin: 8
+                });
+                
+                document.getElementById('qrcode').innerHTML = svgString;
+            } else {
+                document.getElementById('qrcode').innerHTML = '<p style="color: red;">No summary content found!</p>';
+            }
+        });
+    </script>
+
+</body>
+</html>

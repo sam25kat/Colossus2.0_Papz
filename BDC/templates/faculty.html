@@ -209,6 +209,8 @@
             cursor: not-allowed;
             background-color: #d3d3d3;  /* Optional: change background color when disabled */
         }
+
+        
     </style>
 <style>
     .chatbot-btn {
@@ -241,12 +243,13 @@
             <li><a href="/verify_face_page">Public Files/Docs</a></li>
             <li><a href="/">Logout</a></li>
             <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/view_metadata">Metadata</a></li>
         </ul>
     </div>
 
     <div class="main-content">
-        <h1>Uploader Dashboard</h1>
-        <p>Welcome, {{ session['username'] }}</p>
+        <h1>Doctor/Uploader Dashboard</h1>
+        <p>Welcome, Patient Name - {{ session['username'] }}</p>
 
         {% if circular %}
             <p>Current Circular: {{ circular[1] }} (Posted on: {{ circular[2] }})</p>
@@ -328,36 +331,31 @@
         <form method="POST" enctype="multipart/form-data" class="circular-form" id="uploadForm">
             <label for="file">File:</label>
             <input type="file" name="file" id="file" required>
-            
-            <label for="category">Department and Category:</label>
-            <input type="text" name="category" id="category" placeholder="Deptname-Category/Comment" required>
-            
+        
+            <label for="category">Category:</label>
+            <select name="category" id="category" required>
+                <option value="Diagnostic Report">Diagnostic Report</option>
+                <option value="Prescription">Prescription</option>
+                <option value="Doctor Notes">Doctor Notes</option>
+                <option value="Scanning/Lab Reports">Scanning/Lab Reports</option>
+                <option value="High Priority Notes">High Priority Notes</option>
+            </select>
+        
             <label for="dept">Department:</label>
             <input type="text" name="dept" id="dept" placeholder="Deptname" required>
-            
+        
             <button type="button" onclick="analyzeFile()">Analyze</button>
+            <button type="button" id="metadata-btn" onclick="extractMetadata()">Extract Metadata</button>
             
             <p id="rating">Rating: N/A</p>
             <p id="security_score">Known Vulnerabilities: N/A</p>
-            
-            <!-- Hidden input to store file data temporarily -->
+        
             <input type="hidden" id="fileData" name="fileData">
-            
-            <!-- Initially disable both buttons -->
             <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
-            <button id="upload" type="button" onclick="verifyAndUpload()" disabled>Upload</button>
-            
+            <button id="upload" type="button" onclick="verifyUploadAndExtractMetadata()" disabled>Upload</button>
         </form>
-        <form action="/generate_report" method="post" enctype="multipart/form-data">
-            <input type="file" name="virus_total_file" required>
-            <input type="submit" value="Generate PDF">
-        </form>
-        <!-- Button to view metadata page -->
-        <a href="{{ url_for('view_metadata') }}">
-            <button style="padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px;">
-                View File Metadata
-            </button>
-        </a>
+        
+        
         
 
         <div class="table-container">
@@ -460,7 +458,117 @@
                 });
             };
             reader.readAsDataURL(file);
+            
+
         }
+        // Function to extract metadata from the selected file
+        function extractMetadata() {
+    const fileInput = document.getElementById("file");
+    const category = document.getElementById("category").value;
+    
+    if (fileInput.files.length === 0) {
+        alert("Please select a file first.");
+        return;
+    }
+    
+    // Display loading status
+    const metadataBtn = document.getElementById("metadata-btn");
+    const originalButtonText = metadataBtn.innerHTML;
+    metadataBtn.innerHTML = '<span style="display:inline-block">Processing...</span>';
+    metadataBtn.disabled = true;
+    
+    // Create a status message element
+    let statusElement = document.getElementById("metadata-status");
+    if (!statusElement) {
+        statusElement = document.createElement("div");
+        statusElement.id = "metadata-status";
+        statusElement.style.margin = "10px 0";
+        metadataBtn.parentNode.insertBefore(statusElement, metadataBtn.nextSibling);
+    }
+    statusElement.innerHTML = '<div style="color:#0066cc">Extracting metadata, please wait...</div>';
+    
+    // Convert file to base64
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(event) {
+        const fileData = event.target.result;
+        const fileName = file.name;
+        
+        statusElement.innerHTML = '<div style="color:#0066cc">Sending to server for processing...</div>';
+        
+        // Send to server
+        fetch('/extract_metadata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_data: fileData,
+                file_name: fileName,
+                category: category
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                statusElement.innerHTML = '<div style="color:green">✓ Metadata extracted and saved successfully!</div>';
+                
+                // Display a summary of the extracted metadata
+                let metadataSummary = document.createElement("div");
+                metadataSummary.style.marginTop = "10px";
+                metadataSummary.style.padding = "10px";
+                metadataSummary.style.backgroundColor = "#f0f9ff";
+                metadataSummary.style.borderRadius = "5px";
+                metadataSummary.style.border = "1px solid #cce5ff";
+                
+                let summaryHtml = `
+                    <p><strong>Summary:</strong> ${data.metadata.summary}</p>
+                    <p><strong>Document Type:</strong> ${data.metadata.document_type}</p>
+                `;
+                
+                if (data.metadata.keywords && data.metadata.keywords.length > 0) {
+                    summaryHtml += `<p><strong>Keywords:</strong> ${data.metadata.keywords.join(", ")}</p>`;
+                }
+                
+                metadataSummary.innerHTML = summaryHtml;
+                statusElement.appendChild(metadataSummary);
+                
+                let viewLink = document.createElement("a");
+                viewLink.href = "/view_metadata";
+                viewLink.textContent = "View all metadata records";
+                viewLink.style.display = "inline-block";
+                viewLink.style.marginTop = "10px";
+                viewLink.style.color = "#0066cc";
+                statusElement.appendChild(viewLink);
+                
+            } else {
+                statusElement.innerHTML = `<div style="color:red">Error: ${data.message}</div>`;
+                
+                if (data.metadata && data.metadata.summary) {
+                    statusElement.innerHTML += `<div style="margin-top:10px"><strong>Limited metadata extracted:</strong> ${data.metadata.summary}</div>`;
+                }
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            statusElement.innerHTML = `<div style="color:red">Error communicating with server. Please try again.</div>`;
+        })
+        .finally(() => {
+            // Reset button state
+            metadataBtn.innerHTML = originalButtonText;
+            metadataBtn.disabled = false;
+        });
+    };
+    
+    reader.onerror = function() {
+        statusElement.innerHTML = `<div style="color:red">Error reading file. Please try again.</div>`;
+        metadataBtn.innerHTML = originalButtonText;
+        metadataBtn.disabled = false;
+    };
+    
+    reader.readAsDataURL(file);
+}
     </script>
     <script>
         // Access the webcam
@@ -496,6 +604,16 @@
             // Show the webcam section
             document.querySelector('.video-container').style.display = 'block';
         });
+        function verifyUploadAndExtractMetadata() {
+    // First extract metadata
+    extractMetadata();
+    
+    // Then proceed with verification and upload
+    // You might want to add a small delay to ensure metadata extraction has started
+    setTimeout(() => {
+        verifyAndUpload();
+    }, 500); // Small delay to ensure metadata extraction has started
+}
     </script>
 </body>
 </html>

@@ -270,14 +270,15 @@
                     <input type="text" id="username" name="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password:</label>
+                    <label for="password">Patient ID:</label>
                     <input type="password" id="password" name="password" required>
                 </div>
                 <button type="submit" class="btn">Login</button>
             </form>
             <div class="links">
-                <p>Don't have an account? <a href="/signup" class="link">Signup</a></p>
-                <p>You're an admin? <a href="/admin_loginfromhome" class="link">Signin</a></p>
+                <p>Don't have an account with the patient? <a href="/signup" class="link">Signup</a></p>
+                <p>You're an Patient/User? <a href="/admin_loginfromhome" class="link">Signin</a></p>
+                <p>Looking for Research Data? <a href="/researcher" class="link">Give it a whirl</a></p>
             </div>
             {% if message %}
                 <p class="message">{{ message }}</p>
