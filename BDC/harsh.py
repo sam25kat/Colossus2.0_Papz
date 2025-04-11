@@ -1423,8 +1423,7 @@ def scan_file_with_virustotal(file):
             
             return security_score
         else:
-            security_score=0
-            return security_score
+            return "Error scanning file"
     
     except Exception as e:
         return f"VirusTotal API Error: {str(e)}"
@@ -2072,13 +2071,12 @@ def extract_with_gemini(file_path, file_name, category):
                 {
                     "text": f"""Analyze this image (filename: {file_name}, category: {category}) and extract key metadata.
                     Extract the following information:
-                     1. Detailed summary 
-                        2. Keywords 
-                        3. Main themes or topics
-                        4. Document type and purpose
-                        5. Any dates mentioned
-                        6. Any names of people or organizations
-                        7. Any specific allergens prescriptions diagnosis and related specific and general medical health without missig anything
+                    1. Brief summary (2-3 sentences)
+                    2. Keywords (up to 5)
+                    3. Main themes or topics
+                    4. Document type and purpose
+                    5. Any dates mentioned
+                    6. Any names of people or organizations
                     
                     Format your response as valid JSON with these keys: summary, keywords, main_themes, document_type, dates_mentioned, entities"""
                 },
@@ -2111,13 +2109,12 @@ def extract_with_gemini(file_path, file_name, category):
             {content[:3000]}  # Limiting content length
             
             Extract the following information:
-            1. Detailed summary 
-            2. Keywords 
+            1. Brief summary (2-3 sentences)
+            2. Keywords (up to 5)
             3. Main themes or topics
             4. Document type and purpose
             5. Any dates mentioned
             6. Any names of people or organizations
-            7. Any specific allergens prescriptions diagnosis and related specific and general medical health without missig anything
             
             Format your response as valid JSON with these keys: summary, keywords, main_themes, document_type, dates_mentioned, entities
             """
@@ -2136,13 +2133,12 @@ def extract_with_gemini(file_path, file_name, category):
             {content[:3000]}  # Limiting content length
             
             Extract the following information:
-             1. Detailed summary 
-            2. Keywords 
+            1. Brief summary (2-3 sentences)
+            2. Keywords (up to 5)
             3. Main themes or topics
             4. Document type and purpose
             5. Any dates mentioned
             6. Any names of people or organizations
-            7. Any specific allergens prescriptions diagnosis and related specific and general medical health without missig anything
             
             Format your response as valid JSON with these keys: summary, keywords, main_themes, document_type, dates_mentioned, entities
             """
@@ -2332,112 +2328,36 @@ def save_metadata_to_db(filename, category, metadata_json):
         print(f"Database error: {str(e)}")
         return False
 
+# Add route to view metadata records
 @app.route('/view_metadata')
 def view_metadata():
-    """
-    Route to display all metadata records from the database with AI-generated health summary
-    """
-    # Connect to the database
-    conn = get_db_connection()
-    
     try:
-        # Fetch all metadata records, ordered by most recent first
+        conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id, filename, category, timestamp, metdata as metadata
-            FROM metadata_record
-            ORDER BY timestamp DESC
-        ''')
         
-        # Fetch all rows and convert to dictionaries
-        records = []
-        summaries = []
-        medical_summaries = []
+        cursor.execute("SELECT id, filename, category, timestamp, metdata FROM metadata_record ORDER BY timestamp DESC")
+        records = cursor.fetchall()
         
-        for row in cursor.fetchall():
-            record = {
-                'id': row[0],
-                'filename': row[1],
-                'category': row[2],
-                'timestamp': row[3],
-                'metadata': row[4]
-            }
-            
-            # Try to parse metadata as JSON for better display
-            try:
-                if record['metadata']:
-                    metadata_json = json.loads(record['metadata'])
-                    record['metadata'] = metadata_json
-                    
-                    # Extract summary if available
-                    if isinstance(metadata_json, dict) and 'summary' in metadata_json:
-                        summary_text = metadata_json['summary']
-                        summaries.append(f"{record['filename']}: {summary_text}")
-                        
-                        # Collect medical summaries separately
-                        if record['category'] in ['Prescription', 'Doctor Notes', 'Diagnostic Report']:
-                            medical_summaries.append(summary_text)
-            except:
-                # If not valid JSON, keep as is
-                pass
-                
-            records.append(record)
+        metadata_list = []
+        for record in records:
+            id, filename, category, timestamp, metadata_str = record
+            metadata_json = json.loads(metadata_str)
+            metadata_list.append({
+                'id': id,
+                'filename': filename,
+                'category': category,
+                'timestamp': timestamp,
+                'metadata': metadata_json
+            })
         
-        # Generate overall summary
-        summary = "This collection contains " + str(len(records)) + " records. "
-        if summaries:
-            summary += "Key documents include: " + "; ".join(summaries[:3])
-            if len(summaries) > 3:
-                summary += f"; and {len(summaries) - 3} more documents."
-        
-        # Generate medical summary using Gemini if medical records found
-        medical_summary = ""
-        if medical_summaries:
-            try:
-                # Configure Gemini API
-                genai.configure(api_key="AIzaSyCBt1P_Hr9RK4-P6e872pjbUoXCObGlO6U")
-                
-                # Set up the model
-                generation_config = {
-                    "temperature": 0.2,
-                    "top_p": 0.8,
-                    "top_k": 40,
-                    "max_output_tokens": 500,
-                }
-                
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    generation_config=generation_config
-                )
-                
-                # Create prompt for Gemini
-                prompt = """
-                You are an emergency health data synthesizer. Based on the following medical records, 
-                create a concise summary (2-3 sentences) that would be essential for paramedics or 
-                emergency health assessors. Focus on current medications, critical conditions, allergies, 
-                and recent test results. Format the information in bullet points.
-                
-                Medical records:
-                """ + "\n".join(medical_summaries)
-                
-                # Generate response
-                response = model.generate_content(prompt)
-                medical_summary = response.text
-            except Exception as e:
-                print(f"Gemini API error: {e}")
-                medical_summary = "Error generating medical summary. Please review individual records."
-        else:
-            medical_summary = "No medical records found."
-        
-        return render_template('metadata_records.html', records=records, summary=medical_summary, medical_summary=medical_summary)
-        
-    except Exception as e:
-        print(f"Database error: {e}")
-        flash('Error retrieving metadata records', 'error')
-        return redirect(url_for('faculty'))
-        
-    finally:
         conn.close()
+        
+        # Return the metadata records page
+        return render_template('metadata_records.html', records=metadata_list)
+    
+    except Exception as e:
+        return f"Error retrieving metadata records: {str(e)}"
+
 
 
 

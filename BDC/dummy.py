@@ -767,7 +767,7 @@ def login():
 
         if user and check_password_hash(user[2], password):  # Verify password
             if user[5] == 0:  # Check if the account is approved
-                flash("Your account is pending admin approval.", "warning")
+                flash("Your account is pending admin/patient approval.", "warning")
                 return redirect(url_for('login'))
 
             # Set session without OTP
@@ -1736,7 +1736,7 @@ def chatbot():
 
         full_prompt = f"""{reference_prompt}
 
-        Now, engage in a natural, conversational chat with the user, using the provided database information as context.  If the user's query can be directly answered from the database, provide the answer. If the query is more conversational or requires interpretation, respond appropriately, referencing the data where relevant. If the answer is not found in the database, respond politely indicating this.
+        Now, engage in a natural, conversational chat with the user, using the provided database information as context.  If the user's query can be directly answered from the database, provide the answer. If the query is more conversational or requires interpretation, respond appropriately, referencing the data where relevant. If the answer is not found in the database, respond politely indicating this. You are a assistant in a healthcare assistance application
 
         User Query: {user_query}
         """
