@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard</title>
+    <link rel="stylesheet" href="static/faculty.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+        function searchTable(inputId, tableId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+                let isVisible = false;
+                const cells = rows[i].getElementsByTagName("td");
+                
+                for (let cell of cells) {
+                    if (cell.textContent.toUpperCase().includes(filter)) {
+                        isVisible = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = isVisible ? "" : "none";
+            }
+        }
+
+        function countApprovedFiles() {
+            const table = document.getElementById("fileTable");
+            const rows = table.getElementsByTagName("tr");
+            let approvedCount = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                const approvalCell = rows[i].getElementsByTagName("td")[5];
+                if (approvalCell && approvalCell.textContent.trim() === "Approved") {
+                    approvedCount++;
+                }
+            }
+            document.getElementById("approvedCount").textContent = approvedCount;
+        }
+
+        document.addEventListener("DOMContentLoaded", countApprovedFiles);
+
+        let web3;
+        let contract;
+
+        const ABI = [
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "initialSupply", "type": "uint256" },
+                    { "internalType": "uint256", "name": "_rewardRate", "type": "uint256" }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [], 
+                "name": "rewardRate",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [], 
+                "name": "paused",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "string", "name": "fileName", "type": "string" },
+                    { "internalType": "string", "name": "format", "type": "string" }
+                ],
+                "name": "uploadFile",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "togglePause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "newRate", "type": "uint256" }],
+                "name": "setRewardRate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+                "name": "balanceOf",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        const CONTRACT_ADDRESS = "0x9b1f86b0c9e081995BcC0403F56D4B499dAAfe4f"; // Replace with your deployed contract address
+
+        window.onload = async function() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
+                console.log("Connected to contract:", CONTRACT_ADDRESS);
+            } else {
+                alert("Non-Ethereum browser detected. Please install MetaMask.");
+            }
+        };
+
+        async function uploadFileAutomatically(fileName) {
+            const accounts = await web3.eth.getAccounts();
+            const match = fileName.match(/^[A-Z]{3}-.*$/);
+            const format = match ? fileName : "CSE-" + fileName;
+        
+            try {
+                await contract.methods.uploadFile(fileName, format).send({ from: accounts[0] });
+                alert("Incentive Availed. You may upload");
+        
+                // Log the incentive in the database
+                logIncentive(fileName);
+            } catch (error) {
+                console.error("Error uploading file:", error);
+                alert("Not Eligible for Incentive. You may consider renaming the file as per specified format.");
+            }
+        }
+
+        function handleFileUpload(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById("file");
+            const fileName = fileInput.files[0]?.name || "Untitled.pdf";
+            uploadFileAutomatically(fileName);
+        }
+
+        async function logIncentive(fileName) {
+            const userId = "{{ session['user_id'] }}"; // Use session or other identifiers from your Flask app
+        
+            try {
+                const response = await fetch('/log_incentive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ user_id: userId, file_name: fileName }),
+                });
+        
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log("Incentive logged:", result.message);
+                    addIncentiveToTable(userId, fileName, new Date().toLocaleString());
+                } else {
+                    console.error("Error logging incentive:", result.message);
+                }
+            } catch (error) {
+                console.error("Error connecting to server:", error);
+            }
+        }
+        
+        function addIncentiveToTable(userId, fileName, timestamp) {
+            const table = document.getElementById("incentiveTable");
+            const newRow = table.insertRow(-1);
+        
+            const userCell = newRow.insertCell(0);
+            const fileCell = newRow.insertCell(1);
+            const timeCell = newRow.insertCell(2);
+        
+            userCell.textContent = userId;
+            fileCell.textContent = fileName;
+            timeCell.textContent = timestamp;
+        }
+
+        async function getBalance() {
+            if (!web3) {
+                alert("Web3 is not initialized. Please connect to MetaMask.");
+                return;
+            }
+        
+            const accounts = await web3.eth.getAccounts();
+            if (accounts.length === 0) {
+                alert("No account found. Please connect to MetaMask.");
+                return;
+            }
+        
+            const userAddress = accounts[0]; // Get the user's address from MetaMask
+        
+            try {
+                const balance = await contract.methods.balanceOf(userAddress).call();
+                // Assuming the balance is returned in the smallest unit (e.g., wei or other)
+                const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Adjust the unit if needed
+                document.getElementById("coinBalance").textContent = formattedBalance;
+            } catch (error) {
+                console.error("Error getting balance:", error);
+                alert("Unable to fetch balance. Please try again later.");
+            }
+        }
+
+    </script>
+    <style>
+        /* Apply "not-allowed" cursor for disabled buttons */
+        button:disabled {
+            cursor: not-allowed;
+            background-color: #d3d3d3;  /* Optional: change background color when disabled */
+        }
+    </style>
+<style>
+    .chatbot-btn {
+        position: fixed;
+        bottom: 20px; /* Distance from the bottom */
+        right: 20px;  /* Distance from the right */
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        z-index: 1000; /* Ensures it stays above other elements */
+    }
+    
+    .chatbot-btn:hover {
+        background-color:rgb(110, 184, 112);
+    }
+</style>
+    
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">BlocDoc</div>
+        <ul class="nav-links">
+            <li class="active"><a href="/faculty">Dashboard</a></li>
+            <li><a href="/verify_face_page">Public Files/Docs</a></li>
+            <li><a href="/">Logout</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Uploader Dashboard</h1>
+        <p>Welcome, {{ session['username'] }}</p>
+
+        {% if circular %}
+            <p>Current Circular: {{ circular[1] }} (Posted on: {{ circular[2] }})</p>
+        {% endif %}
+
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-content">
+                    <h2>Public Files</h2>
+                    <p><span id="approvedCount">0</span></p>
+                </div>
+                <div class="icon">✔️</div>
+            </div>
+        </div>
+
+
+        <script>
+            function analyzeFile() {
+                var fileInput = document.getElementById("file");
+                var uploadBtn = document.getElementById("upload");
+                var incentivizeBtn = document.getElementById("incentivize");
+        
+                if (fileInput.files.length === 0) {
+                    alert("Please select a file first.");
+                    return;
+                }
+                
+                var formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+                
+                fetch("/analyze", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("rating").innerText = "Rating: " + data.rating;
+                    document.getElementById("security_score").innerText = "Known Vulnerabilities: " + data.security_score;
+                    // Enable "Upload" button after analysis
+                    uploadBtn.disabled = false;
+                    
+                    // Check if the rating is below 3
+                    if(data.security_score !==0){
+                        uploadBtn.disabled = true;
+                        alert("Not eligible for uploading due to security concerns or detection of vulnerabilities in the file.");
+
+                    }
+                    else if (data.rating < 3) {
+                        incentivizeBtn.disabled = true;  // Disable "Get Incentivized" button
+                        alert("Not eligible for incentive due to low rating, but you may continue to upload if you wish without incentive.");
+                    } else {
+                        incentivizeBtn.disabled = false;  // Enable "Get Incentivized" button if eligible
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        </script>
+        
+        <!-- <form method="POST" enctype="multipart/form-data" class="circular-form">
+            <label for="file">File:</label>
+            <input type="file" name="file" id="file" required>
+            
+            <label for="category">Department and Category:</label>
+            <input type="text" name="category" id="category" placeholder="Deptname-Category/Comment" required>
+            
+            <label for="dept">Department:</label>
+            <input type="text" name="dept" id="dept" placeholder="Deptname" required>
+            
+            <button type="button" onclick="analyzeFile()">Analyze</button>
+            
+            <p id="rating">Rating: N/A</p>
+            <p id="security_score">Known Vulnerabilities: N/A</p>
+            
+            
+            <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
+            <button id="upload" type="submit" disabled>Upload</button>
+            
+        </form> -->
+        <form method="POST" enctype="multipart/form-data" class="circular-form" id="uploadForm">
+            <label for="file">File:</label>
+            <input type="file" name="file" id="file" required>
+            
+            <label for="category">Department and Category:</label>
+            <input type="text" name="category" id="category" placeholder="Deptname-Category/Comment" required>
+            
+            <label for="dept">Department:</label>
+            <input type="text" name="dept" id="dept" placeholder="Deptname" required>
+            
+            <button type="button" onclick="analyzeFile()">Analyze</button>
+            
+            <p id="rating">Rating: N/A</p>
+            <p id="security_score">Known Vulnerabilities: N/A</p>
+            
+            <!-- Hidden input to store file data temporarily -->
+            <input type="hidden" id="fileData" name="fileData">
+            
+            <!-- Initially disable both buttons -->
+            <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
+            <button id="upload" type="button" onclick="verifyAndUpload()" disabled>Upload</button>
+            
+        </form>
+        <form action="/generate_report" method="post" enctype="multipart/form-data">
+            <input type="file" name="virus_total_file" required>
+            <input type="submit" value="Generate PDF">
+        </form>
+        <!-- Button to view metadata page -->
+        <a href="{{ url_for('view_metadata') }}">
+            <button style="padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px;">
+                View File Metadata
+            </button>
+        </a>
+        
+
+        <div class="table-container">
+            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control mb-3">
+            <table class="table table-bordered" id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>ID</th> 
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>IPFS Link</th>
+                        <th>Approval Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.dept }}</td>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.category }}</td>
+                        <td><a href="{{ file.ipfs_hash }}" target="_blank">View File</a></td>
+                        <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Add this inside the <body> of faculty.html -->
+<div class="video-container" style="display: none;">
+    <video id="video" autoplay></video>
+    <!-- <button type="button" id="capture-btn">Capture Photo</button> -->
+</div>
+<img id="photo" alt="Captured Photo" style="display: none;">
+
+        <h2>BlocDocCoin Balance</h2>
+        <div class="coinbox"><p> <img id="coinlg" src="static/bcoin.png"> Your current balance: <span id="coinBalance">0</span> BDC </p></div> <br>
+        <button class="getbal" onclick="getBalance()">Get My Balance</button>
+        <!-- Button to view metadata page -->
+
+        <button class="chatbot-btn" onclick="location.href='/chatbot'">Open Chatbot</button>
+    
+    </div>
+    <script>
+        function verifyAndUpload() {
+            // Capture the file data
+            const fileInput = document.getElementById('file');
+            if (fileInput.files.length === 0) {
+                alert("Please select a file first.");
+                return;
+            }
+    
+            // Convert the file to base64
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const fileData = event.target.result;
+    
+                // Store the file data in the hidden input
+                document.getElementById('fileData').value = fileData;
+    
+                // Capture face image from webcam
+                const video = document.getElementById('video');
+                if (!video) {
+                    alert("Webcam not available. Please enable webcam access.");
+                    return;
+                }
+    
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+                // Convert canvas image to base64
+                const faceImageData = canvas.toDataURL('image/jpeg');
+    
+                // Send the face image to the server for verification
+                fetch('/verify_face_before_upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `face_image=${encodeURIComponent(faceImageData)}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        // If face verification succeeds, submit the form
+                        document.getElementById('uploadForm').submit();
+                    } else {
+                        // If face verification fails, display the error message
+                        alert(data.message);
+                        
+                    }
+                })
+                .catch(error => {
+                    alert("Error verifying face. Please try again.");
+                    console.error("Error:", error);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+    <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const photo = document.getElementById('photo');
+    
+        let capturedImageData = null;
+    
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing the webcam: ", err);
+            });
+    
+        // Capture photo from webcam
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            // Convert canvas image to base64
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            photo.src = capturedImageData;
+            photo.style.display = 'block';
+        });
+    </script>
+    <script>
+        document.getElementById('upload').addEventListener('click', () => {
+            // Show the webcam section
+            document.querySelector('.video-container').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
