@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Documents</title>
+    <link rel="stylesheet" href="static/facdoc.css">
+    <style>
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .filter-btn.active {
+            background-color: #3a3a5c;
+            color: white;
+            border-color: #2a2a4c;
+        }
+    </style>
+    <script>
+        function searchTable(inputId, tableId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+                let isVisible = false;
+                const cells = rows[i].getElementsByTagName("td");
+                
+                for (let cell of cells) {
+                    if (cell.textContent.toUpperCase().includes(filter)) {
+                        isVisible = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = isVisible ? "" : "none";
+            }
+        }
+
+        function countResearchFiles() {
+            const table = document.getElementById("fileTable");
+            const rows = table.getElementsByTagName("tr");
+            let researchCount = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                researchCount++;
+            }
+            document.getElementById("researchCount").textContent = researchCount;
+        }
+
+        document.addEventListener("DOMContentLoaded", countResearchFiles);
+
+        let web3;
+        let contract;
+
+        const ABI = [
+            // Same ABI as in your facdoc.html
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "initialSupply", "type": "uint256" },
+                    { "internalType": "uint256", "name": "_rewardRate", "type": "uint256" }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [],
+                "name": "rewardRate",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "paused",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "string", "name": "fileName", "type": "string" },
+                    { "internalType": "string", "name": "format", "type": "string" }
+                ],
+                "name": "uploadFile",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "togglePause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "newRate", "type": "uint256" }],
+                "name": "setRewardRate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        const CONTRACT_ADDRESS = "0x9b1f86b0c9e081995BcC0403F56D4B499dAAfe4f"; // Same as your existing code
+
+        window.onload = async function() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
+                console.log("Connected to contract:", CONTRACT_ADDRESS);
+            } else {
+                alert("Non-Ethereum browser detected. Please install MetaMask.");
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlocDoc</div>
+        <ul class="nav-links">
+            <li class="active"><a href="/researcher">Dashboard</a></li>
+            
+            <li><a href="/">Landing Page</a></li>
+        </ul>
+    </div>
+    <div class="table-container">
+        <input
+            type="text"
+            id="fileSearch"
+            onkeyup="searchTable('fileSearch', 'fileTable')"
+            placeholder="Search for research files.."
+            class="search-input"
+        >
+        
+        <!-- Add category filter buttons -->
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterByCategory('all')">All</button>
+            <button class="filter-btn" onclick="filterByCategory('Diagnostic Report')">Diagnostic Report</button>
+            <button class="filter-btn" onclick="filterByCategory('Prescription')">Prescription</button>
+            <button class="filter-btn" onclick="filterByCategory('Doctor Notes')">Doctor Notes</button>
+            <button class="filter-btn" onclick="filterByCategory('Scanning/Lab Reports')">Scanning/Lab Reports</button>
+            <button class="filter-btn" onclick="filterByCategory('High Priority Notes')">High Priority Notes</button>
+            <button class="filter-btn" onclick="filterByCategory('CSE - Institutional Report')">Institutional Report</button>
+        </div>
+
+        <table id="fileTable">
+            <thead>
+                <tr>
+                    <th>Dept.</th>
+                    <th>ID</th>
+                    <th>File Name</th>
+                    <th>Category</th>
+                    
+                    <th>Uploaded By</th>
+                    <th>Retrieve File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in research_files %}
+                <tr>
+                    <td>{{ file.dept }}</td>
+                    <td>{{ file.id }}</td>
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.category }}</td>
+                    
+                    <td>{{ file.uploader_username }}</td>
+                    <td>
+                        <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')">
+                            Retrieve
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function retrieveFile(ipfsHash) {
+            fetch(`/retrieve/${ipfsHash}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    let url = window.URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = "decrypted_file";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(error => console.error("Error retrieving file:", error));
+        }
+    </script>
+    <script>
+        function filterByCategory(category) {
+            // Update active button
+            const buttons = document.getElementsByClassName("filter-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+                if (buttons[i].textContent === category || 
+                    (category === 'all' && buttons[i].textContent === 'All')) {
+                    buttons[i].classList.add("active");
+                }
+            }
+            
+            // Filter table rows
+            const table = document.getElementById("fileTable");
+            const rows = table.getElementsByTagName("tr");
+            
+            for (let i = 1; i < rows.length; i++) {
+                const categoryCell = rows[i].getElementsByTagName("td")[3]; // The 4th column (index 3) contains category
+                
+                if (categoryCell) {
+                    if (category === 'all' || categoryCell.textContent === category) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    
+        // Your existing functions remain unchanged
+        function retrieveFile(ipfsHash) {
+            fetch(`/retrieve/${ipfsHash}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    let url = window.URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = "decrypted_file";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(error => console.error("Error retrieving file:", error));
+        }
+    </script>
+</body>
+</html>

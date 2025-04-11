@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Incentives Log</title>
+    <link rel="stylesheet" href="static/docs.css">
+    <script>
+        function searchTable(inputId, tableId) {
+            var input, filter, table, tr, td, i, j, txtValue;
+            input = document.getElementById(inputId);
+            filter = input.value.toUpperCase();
+            table = document.getElementById(tableId);
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none";
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th, .table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlockDoc</div>
+        <ul class="nav-links">
+            <li><a href="/admin">Dashboard</a></li>
+            <li><a href="/docs">Documents</a></li>
+            <li><a href="#">Circular</a></li>
+            <li><a href="#">Pending Requests</a></li>
+            <li><a href="/incentive_table">Incentive Logs</a></li>
+            <li><a href="/research_approve">Approve Research</a></li>
+            <li class="active"><a href="/research_incentives">Research Incentives</a></li>
+            <li><a href="/researcher">Researcher</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/">Log Out</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mt-4">Research Incentives Log</h2>
+        <div class="table-container">
+            <input type="text" id="incentiveSearch" onkeyup="searchTable('incentiveSearch', 'incentiveTable')" placeholder="Search incentives.." class="form-control mb-3">
+            <table class="table table-bordered" id="incentiveTable">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Uploader ID</th>
+                        <th>Approved By</th>
+                        <th>Incentive Amount</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for incentive in incentives %}
+                    <tr>
+                        <td>{{ incentive.file_name }}</td>
+                        <td>{{ incentive.uploader_id }}</td>
+                        <td>{{ incentive.approved_by }}</td>
+                        <td>{{ incentive.incentive_amount }} BDC</td>
+                        <td>{{ incentive.timestamp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

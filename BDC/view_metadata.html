@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Uploaded Files Metadata</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 12px; border: 1px solid #ddd; }
+        th { background-color: #333; color: white; }
+        
+    </style>
+</head>
+<body>
+    <h2>Uploaded Files Metadata</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Filename</th>
+                <th>Category</th>
+                <th>Timestamp</th>
+                <th>Metadata</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.filename }}</td>
+                <td>{{ record.category }}</td>
+                <td>{{ record.timestamp }}</td>
+                <td>{{ record.metdata }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

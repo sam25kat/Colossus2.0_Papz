@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Face</title>
+    <style>
+        /* Add your CSS styles here */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        #video {
+            width: 100%;
+            border-radius: 10px;
+        }
+        #capture-btn, #verify-btn {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #capture-btn:hover, #verify-btn:hover {
+            background-color: #0056b3;
+        }
+        #photo {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Grid Background -->
+    <div class="grid-background">
+        <div class="grid-vertical"></div>
+        <div class="grid-horizontal"></div>
+        <!-- Impulse Lines -->
+        <div class="impulse" style="animation-delay: 0s;"></div>
+        <div class="impulse" style="animation-delay: 2s;"></div>
+        <div class="impulse" style="animation-delay: 4s;"></div>
+        <div class="impulse" style="animation-delay: 6s;"></div>
+        <div class="impulse" style="animation-delay: 8s;"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="signup-container">
+        <h2>Verify Face</h2>
+
+        <!-- Webcam Capture Section -->
+        <div class="video-container">
+            <video id="video" autoplay></video>
+            <button type="button" id="capture-btn">Capture Photo</button>
+        </div>
+        <img id="photo" alt="Captured Photo" style="display: none;">
+
+        <!-- Verify Face Button -->
+        <button type="button" id="verify-btn">Verify Face</button>
+
+        <!-- Result Message -->
+        <div id="result-message" style="margin-top: 20px;"></div>
+    </div>/
+
+
+    <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const verifyBtn = document.getElementById('verify-btn');
+        const photo = document.getElementById('photo');
+        const resultMessage = document.getElementById('result-message');
+    
+        let capturedImageData = null;
+    
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing the webcam: ", err);
+            });
+    
+        // Capture photo from webcam
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            // Convert canvas image to base64
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            photo.src = capturedImageData;
+            photo.style.display = 'block';
+    
+            resultMessage.textContent = "Photo captured! Click 'Verify Face' to proceed.";
+        });
+    
+        // Verify Face
+        verifyBtn.addEventListener('click', () => {
+            if (!capturedImageData) {
+                resultMessage.textContent = "Please capture a photo first.";
+                return;
+            }
+    
+            // Send the image to the server for verification
+            fetch('/verify_face', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `face_image=${encodeURIComponent(capturedImageData)}`,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    // Redirect to /facdoc on success
+                    window.location.href = "/facdoc";
+                } else {
+                    // Display error message on failure
+                    resultMessage.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                resultMessage.textContent = "Error verifying face. Please try again.";
+                console.error("Error:", error);
+            });
+        });
+    </script>
+
+    <!-- <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const verifyBtn = document.getElementById('verify-btn');
+        const photo = document.getElementById('photo');
+        const resultMessage = document.getElementById('result-message');
+
+        let capturedImageData = null;
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing the webcam: ", err);
+            });
+
+        // Capture photo from webcam
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas image to base64
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            photo.src = capturedImageData;
+            photo.style.display = 'block';
+
+            resultMessage.textContent = "Photo captured! Click 'Verify Face' to proceed.";
+        });
+
+        // Verify Face
+        verifyBtn.addEventListener('click', () => {
+            if (!capturedImageData) {
+                resultMessage.textContent = "Please capture a photo first.";
+                return;
+            }
+
+            // Send the image to the server for verification
+            fetch('/verify_face', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `face_image=${encodeURIComponent(capturedImageData)}`,
+            })
+            .then(response => response.text())
+            .then(data => {
+                resultMessage.textContent = data;
+            })
+            .catch(error => {
+                resultMessage.textContent = "Error verifying face. Please try again.";
+                console.error("Error:", error);
+            });
+        });
+    </script> -->
+</body>
+</html>
