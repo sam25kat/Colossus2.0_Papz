@@ -1,0 +1,52 @@
+/* Sidebar Styles */
+    .sidebar {
+        width: 250px;
+        background: rgba(8, 8, 8, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        position: fixed;
+        height: 100vh;
+        z-index: 10;
+    }
+    
+    .logo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, #ffffff, #e0e0e0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .nav-links {
+        list-style: none;
+    }
+    
+    .nav-links a {
+        color: #a0a0a0;
+        text-decoration: none;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        display: block;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .nav-links a.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        padding: 2rem;
+        width: calc(100% - 250px);
+    }

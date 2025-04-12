@@ -1,38 +1,385 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research Documents</title>
+    <title>BlocDoc Research Documents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/facdoc.css">
     <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --accent-primary: #1a1a1a;
+            --accent-secondary: #2d2d2d;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --glow-color: rgba(0, 0, 0, 0.1);
+            --success: #4caf50;
+            --success-hover: #45a049;
+            --primary: #000000;
+            --primary-hover: #000000;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+        
+        /* Stars Background - keeping but making invisible */
+        .stars {
+            display: none;
+        }
+        
+        /* Hologram Grid - keeping but making invisible */
+        .hologram-grid {
+            display: none;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-link {
+            color: #a0a0a0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .nav-indicator {
+            display: none;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            width: calc(100% - 250px);
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Search Input */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--glow-color);
+        }
+        
+        .search-border {
+            display: none;
+        }
+        
+        /* Filter Buttons */
         .filter-container {
             display: flex;
             flex-wrap: wrap;
-            margin: 15px 0;
-            gap: 10px;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
         }
         
         .filter-btn {
-            padding: 8px 15px;
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
         }
         
         .filter-btn:hover {
-            background-color: #e0e0e0;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
         
         .filter-btn.active {
-            background-color: #3a3a5c;
+            background: var(--primary);
             color: white;
-            border-color: #2a2a4c;
+            border-color: var(--primary);
+        }
+        
+        /* Table Styles */
+        .table-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            padding: 1.5rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--bg-secondary);
+        }
+        
+        tr:hover td {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
+        }
+        
+        .retrieve-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .retrieve-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 1rem;
+            }
+        
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+                height: calc(100vh - 200px);
+            }
+        
+            .logo {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+        
+            .nav-links {
+                flex-direction: row;
+                justify-content: center;
+            }
+        
+            .table-wrapper {
+                overflow-x: auto;
+            }
         }
     </style>
+</head>
+<body>
+    <!-- Stars Background -->
+    <div id="stars" class="stars"></div>
+
+    <!-- Hologram Grid -->
+    <div class="hologram-grid"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">BlocDoc</div>
+        <div class="nav-links">
+            <a href="/researcher" class="nav-link active">
+                <span class="nav-indicator"></span>
+                Dashboard
+            </a>
+            <a href="/" class="nav-link">
+                <span class="nav-indicator"></span>
+                Landing Page
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="search-container">
+            <input
+                type="text"
+                id="fileSearch"
+                onkeyup="searchTable('fileSearch', 'fileTable')"
+                placeholder="Search research files..."
+                class="search-input"
+            >
+            <div class="search-border"></div>
+        </div>
+
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterByCategory('all')">All</button>
+            <button class="filter-btn" onclick="filterByCategory('Diagnostic Report')">Diagnostic Report</button>
+            <button class="filter-btn" onclick="filterByCategory('Prescription')">Prescription</button>
+            <button class="filter-btn" onclick="filterByCategory('Doctor Notes')">Doctor Notes</button>
+            <button class="filter-btn" onclick="filterByCategory('Scanning/Lab Reports')">Scanning/Lab Reports</button>
+            <button class="filter-btn" onclick="filterByCategory('High Priority Notes')">High Priority Notes</button>
+            <button class="filter-btn" onclick="filterByCategory('CSE - Institutional Report')">Institutional Report</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>ID</th>
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>Uploaded By</th>
+                        <th>Retrieve File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in research_files %}
+                    <tr>
+                        <td>{{ file.dept }}</td>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.category }}</td>
+                        <td>{{ file.uploader_username }}</td>
+                        <td>
+                            <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')" class="retrieve-btn">
+                                Retrieve
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
+        // All JavaScript remains unchanged
+        // Generate stars for background
+        document.addEventListener('DOMContentLoaded', function() {
+            const starsContainer = document.getElementById('stars');
+            const starsCount = 100;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 4}s`;
+                starsContainer.appendChild(star);
+            }
+
+            // Generate hologram grid
+            const hologramGrid = document.querySelector('.hologram-grid');
+            const gridSize = 20;
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const gridPoint = document.createElement('div');
+                    gridPoint.classList.add('grid-point');
+                    hologramGrid.appendChild(gridPoint);
+                }
+            }
+        });
+
         function searchTable(inputId, tableId) {
             const input = document.getElementById(inputId);
             const filter = input.value.toUpperCase();
@@ -53,24 +400,52 @@
             }
         }
 
-        function countResearchFiles() {
+        function filterByCategory(category) {
+            const buttons = document.getElementsByClassName("filter-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+                if (buttons[i].textContent === category || 
+                    (category === 'all' && buttons[i].textContent === 'All')) {
+                    buttons[i].classList.add("active");
+                }
+            }
+            
             const table = document.getElementById("fileTable");
             const rows = table.getElementsByTagName("tr");
-            let researchCount = 0;
-
+            
             for (let i = 1; i < rows.length; i++) {
-                researchCount++;
+                const categoryCell = rows[i].getElementsByTagName("td")[3];
+                
+                if (categoryCell) {
+                    if (category === 'all' || categoryCell.textContent === category) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
             }
-            document.getElementById("researchCount").textContent = researchCount;
         }
 
-        document.addEventListener("DOMContentLoaded", countResearchFiles);
+        function retrieveFile(ipfsHash) {
+            fetch(`/retrieve/${ipfsHash}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    let url = window.URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = "decrypted_file";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(error => console.error("Error retrieving file:", error));
+        }
 
+        // Web3 Integration
         let web3;
         let contract;
 
         const ABI = [
-            // Same ABI as in your facdoc.html
             {
                 "inputs": [
                     { "internalType": "uint256", "name": "initialSupply", "type": "uint256" },
@@ -119,7 +494,7 @@
             }
         ];
 
-        const CONTRACT_ADDRESS = "0x9b1f86b0c9e081995BcC0403F56D4B499dAAfe4f"; // Same as your existing code
+        const CONTRACT_ADDRESS = "0x9b1f86b0c9e081995BcC0403F56D4B499dAAfe4f";
 
         window.onload = async function() {
             if (window.ethereum) {
@@ -132,128 +507,6 @@
                 alert("Non-Ethereum browser detected. Please install MetaMask.");
             }
         };
-    </script>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo">BlocDoc</div>
-        <ul class="nav-links">
-            <li class="active"><a href="/researcher">Dashboard</a></li>
-            
-            <li><a href="/">Landing Page</a></li>
-        </ul>
-    </div>
-    <div class="table-container">
-        <input
-            type="text"
-            id="fileSearch"
-            onkeyup="searchTable('fileSearch', 'fileTable')"
-            placeholder="Search for research files.."
-            class="search-input"
-        >
-        
-        <!-- Add category filter buttons -->
-        <div class="filter-container">
-            <button class="filter-btn active" onclick="filterByCategory('all')">All</button>
-            <button class="filter-btn" onclick="filterByCategory('Diagnostic Report')">Diagnostic Report</button>
-            <button class="filter-btn" onclick="filterByCategory('Prescription')">Prescription</button>
-            <button class="filter-btn" onclick="filterByCategory('Doctor Notes')">Doctor Notes</button>
-            <button class="filter-btn" onclick="filterByCategory('Scanning/Lab Reports')">Scanning/Lab Reports</button>
-            <button class="filter-btn" onclick="filterByCategory('High Priority Notes')">High Priority Notes</button>
-            <button class="filter-btn" onclick="filterByCategory('CSE - Institutional Report')">Institutional Report</button>
-        </div>
-
-        <table id="fileTable">
-            <thead>
-                <tr>
-                    <th>Dept.</th>
-                    <th>ID</th>
-                    <th>File Name</th>
-                    <th>Category</th>
-                    
-                    <th>Uploaded By</th>
-                    <th>Retrieve File</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for file in research_files %}
-                <tr>
-                    <td>{{ file.dept }}</td>
-                    <td>{{ file.id }}</td>
-                    <td>{{ file.name }}</td>
-                    <td>{{ file.category }}</td>
-                    
-                    <td>{{ file.uploader_username }}</td>
-                    <td>
-                        <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')">
-                            Retrieve
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <script>
-        function retrieveFile(ipfsHash) {
-            fetch(`/retrieve/${ipfsHash}`)
-                .then(response => response.blob())
-                .then(blob => {
-                    let url = window.URL.createObjectURL(blob);
-                    let a = document.createElement('a');
-                    a.href = url;
-                    a.download = "decrypted_file";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                })
-                .catch(error => console.error("Error retrieving file:", error));
-        }
-    </script>
-    <script>
-        function filterByCategory(category) {
-            // Update active button
-            const buttons = document.getElementsByClassName("filter-btn");
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove("active");
-                if (buttons[i].textContent === category || 
-                    (category === 'all' && buttons[i].textContent === 'All')) {
-                    buttons[i].classList.add("active");
-                }
-            }
-            
-            // Filter table rows
-            const table = document.getElementById("fileTable");
-            const rows = table.getElementsByTagName("tr");
-            
-            for (let i = 1; i < rows.length; i++) {
-                const categoryCell = rows[i].getElementsByTagName("td")[3]; // The 4th column (index 3) contains category
-                
-                if (categoryCell) {
-                    if (category === 'all' || categoryCell.textContent === category) {
-                        rows[i].style.display = "";
-                    } else {
-                        rows[i].style.display = "none";
-                    }
-                }
-            }
-        }
-    
-        // Your existing functions remain unchanged
-        function retrieveFile(ipfsHash) {
-            fetch(`/retrieve/${ipfsHash}`)
-                .then(response => response.blob())
-                .then(blob => {
-                    let url = window.URL.createObjectURL(blob);
-                    let a = document.createElement('a');
-                    a.href = url;
-                    a.download = "decrypted_file";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                })
-                .catch(error => console.error("Error retrieving file:", error));
-        }
     </script>
 </body>
 </html>

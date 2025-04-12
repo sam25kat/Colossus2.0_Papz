@@ -4,8 +4,327 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty Dashboard</title>
-    <link rel="stylesheet" href="static/faculty.css">
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --accent-primary: #1a1a1a;
+            --accent-secondary: #2d2d2d;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --success: #000000;
+            --success-hover: #000000;
+            --primary: #000000;
+            --primary-hover: #000000;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-links li a {
+            color: #a0a0a0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+        }
+        
+        h1, h2 {
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+        }
+        
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .stats-cards {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+        }
+        
+        .card-content h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-content p {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .icon {
+            font-size: 2.5rem;
+            color: var(--accent-secondary);
+        }
+        
+        .circular-form {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .circular-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .circular-form input[type="file"],
+        .circular-form input[type="text"],
+        .circular-form select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+        }
+        
+        .circular-form button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .circular-form button:hover {
+            background: var(--primary-hover);
+        }
+        
+        .circular-form button:disabled {
+            background: #d3d3d3;
+            cursor: not-allowed;
+        }
+        
+        .circular-form p {
+            margin-bottom: 1rem;
+        }
+        
+        .coinbox {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .coinbox p {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        #coinlg {
+            height: 30px;
+            width: 30px;
+        }
+        
+        .getbal {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .getbal:hover {
+            background: var(--primary-hover);
+        }
+        
+        .video-container {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        #video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        #photo {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1rem auto;
+        }
+        
+        .chatbot-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .chatbot-btn:hover {
+            background-color: var(--success-hover);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .card {
+                flex-direction: column;
+            }
+            
+            .stats-cards {
+                flex-direction: column;
+            }
+        }
+    </style>
     <script>
         function searchTable(inputId, tableId) {
             const input = document.getElementById(inputId);
@@ -201,206 +520,47 @@
                 alert("Unable to fetch balance. Please try again later.");
             }
         }
-
-    </script>
-    <style>
-        /* Apply "not-allowed" cursor for disabled buttons */
-        button:disabled {
-            cursor: not-allowed;
-            background-color: #d3d3d3;  /* Optional: change background color when disabled */
-        }
-
         
-    </style>
-<style>
-    .chatbot-btn {
-        position: fixed;
-        bottom: 20px; /* Distance from the bottom */
-        right: 20px;  /* Distance from the right */
-        background-color: #4caf50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-        z-index: 1000; /* Ensures it stays above other elements */
-    }
+        function analyzeFile() {
+            var fileInput = document.getElementById("file");
+            var uploadBtn = document.getElementById("upload");
+            var incentivizeBtn = document.getElementById("incentivize");
     
-    .chatbot-btn:hover {
-        background-color:rgb(110, 184, 112);
-    }
-</style>
-    
-</head>
-<body>
-
-    <div class="sidebar">
-        <div class="logo">BlocDoc</div>
-        <ul class="nav-links">
-            <li class="active"><a href="/faculty">Dashboard</a></li>
-            <li><a href="/verify_face_page">Public Files/Docs</a></li>
-            <li><a href="/">Logout</a></li>
-            <li><a href="/chatbot">Chat</a></li>
-            <li><a href="/view_metadata">Metadata</a></li>
-        </ul>
-    </div>
-
-    <div class="main-content">
-        <h1>Doctor/Uploader Dashboard</h1>
-        <p>Welcome, Patient Name - {{ session['username'] }}</p>
-
-        {% if circular %}
-            <p>Current Circular: {{ circular[1] }} (Posted on: {{ circular[2] }})</p>
-        {% endif %}
-
-        <div class="stats-cards">
-            <div class="card">
-                <div class="card-content">
-                    <h2>Public Files</h2>
-                    <p><span id="approvedCount">0</span></p>
-                </div>
-                <div class="icon">✔️</div>
-            </div>
-        </div>
-
-
-        <script>
-            function analyzeFile() {
-                var fileInput = document.getElementById("file");
-                var uploadBtn = document.getElementById("upload");
-                var incentivizeBtn = document.getElementById("incentivize");
-        
-                if (fileInput.files.length === 0) {
-                    alert("Please select a file first.");
-                    return;
-                }
-                
-                var formData = new FormData();
-                formData.append("file", fileInput.files[0]);
-                
-                fetch("/analyze", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("rating").innerText = "Rating: " + data.rating;
-                    document.getElementById("security_score").innerText = "Known Vulnerabilities: " + data.security_score;
-                    // Enable "Upload" button after analysis
-                    uploadBtn.disabled = false;
-                    
-                    // Check if the rating is below 3
-                    if(data.security_score !==0){
-                        uploadBtn.disabled = true;
-                        alert("Not eligible for uploading due to security concerns or detection of vulnerabilities in the file.");
-
-                    }
-                    else if (data.rating < 3) {
-                        incentivizeBtn.disabled = true;  // Disable "Get Incentivized" button
-                        alert("Not eligible for incentive due to low rating, but you may continue to upload if you wish without incentive.");
-                    } else {
-                        incentivizeBtn.disabled = false;  // Enable "Get Incentivized" button if eligible
-                    }
-                })
-                .catch(error => console.error("Error:", error));
+            if (fileInput.files.length === 0) {
+                alert("Please select a file first.");
+                return;
             }
-        </script>
-        
-        <!-- <form method="POST" enctype="multipart/form-data" class="circular-form">
-            <label for="file">File:</label>
-            <input type="file" name="file" id="file" required>
             
-            <label for="category">Department and Category:</label>
-            <input type="text" name="category" id="category" placeholder="Deptname-Category/Comment" required>
+            var formData = new FormData();
+            formData.append("file", fileInput.files[0]);
             
-            <label for="dept">Department:</label>
-            <input type="text" name="dept" id="dept" placeholder="Deptname" required>
-            
-            <button type="button" onclick="analyzeFile()">Analyze</button>
-            
-            <p id="rating">Rating: N/A</p>
-            <p id="security_score">Known Vulnerabilities: N/A</p>
-            
-            
-            <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
-            <button id="upload" type="submit" disabled>Upload</button>
-            
-        </form> -->
-        <form method="POST" enctype="multipart/form-data" class="circular-form" id="uploadForm">
-            <label for="file">File:</label>
-            <input type="file" name="file" id="file" required>
-        
-            <label for="category">Category:</label>
-            <select name="category" id="category" required>
-                <option value="Diagnostic Report">Diagnostic Report</option>
-                <option value="Prescription">Prescription</option>
-                <option value="Doctor Notes">Doctor Notes</option>
-                <option value="Scanning/Lab Reports">Scanning/Lab Reports</option>
-                <option value="High Priority Notes">High Priority Notes</option>
-            </select>
-        
-            <label for="dept">Department:</label>
-            <input type="text" name="dept" id="dept" placeholder="Deptname" required>
-        
-            <button type="button" onclick="analyzeFile()">Analyze</button>
-            <button type="button" id="metadata-btn" onclick="extractMetadata()">Extract Metadata</button>
-            
-            <p id="rating">Rating: N/A</p>
-            <p id="security_score">Known Vulnerabilities: N/A</p>
-        
-            <input type="hidden" id="fileData" name="fileData">
-            <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
-            <button id="upload" type="button" onclick="verifyUploadAndExtractMetadata()" disabled>Upload</button>
-        </form>
-        
-        
-        
+            fetch("/analyze", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("rating").innerText = "Rating: " + data.rating;
+                document.getElementById("security_score").innerText = "Known Vulnerabilities: " + data.security_score;
+                // Enable "Upload" button after analysis
+                uploadBtn.disabled = false;
+                
+                // Check if the rating is below 3
+                if(data.security_score !==0){
+                    uploadBtn.disabled = true;
+                    alert("Not eligible for uploading due to security concerns or detection of vulnerabilities in the file.");
 
-        <div class="table-container">
-            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control mb-3">
-            <table class="table table-bordered" id="fileTable">
-                <thead>
-                    <tr>
-                        <th>Dept.</th>
-                        <th>ID</th> 
-                        <th>File Name</th>
-                        <th>Category</th>
-                        <th>IPFS Link</th>
-                        <th>Approval Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for file in files %}
-                    <tr>
-                        <td>{{ file.dept }}</td>
-                        <td>{{ file.id }}</td>
-                        <td>{{ file.name }}</td>
-                        <td>{{ file.category }}</td>
-                        <td><a href="{{ file.ipfs_hash }}" target="_blank">View File</a></td>
-                        <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <!-- Add this inside the <body> of faculty.html -->
-<div class="video-container" style="display: none;">
-    <video id="video" autoplay></video>
-    <!-- <button type="button" id="capture-btn">Capture Photo</button> -->
-</div>
-<img id="photo" alt="Captured Photo" style="display: none;">
-
-        <h2>BlocDocCoin Balance</h2>
-        <div class="coinbox"><p> <img id="coinlg" src="static/bcoin.png"> Your current balance: <span id="coinBalance">0</span> BDC </p></div> <br>
-        <button class="getbal" onclick="getBalance()">Get My Balance</button>
-        <!-- Button to view metadata page -->
-
-        <button class="chatbot-btn" onclick="location.href='/chatbot'">Open Chatbot</button>
-    
-    </div>
-    <script>
+                }
+                else if (data.rating < 3) {
+                    incentivizeBtn.disabled = true;  // Disable "Get Incentivized" button
+                    alert("Not eligible for incentive due to low rating, but you may continue to upload if you wish without incentive.");
+                } else {
+                    incentivizeBtn.disabled = false;  // Enable "Get Incentivized" button if eligible
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+        
         function verifyAndUpload() {
             // Capture the file data
             const fileInput = document.getElementById('file');
@@ -458,122 +618,232 @@
                 });
             };
             reader.readAsDataURL(file);
-            
-
         }
-        // Function to extract metadata from the selected file
+        
         function extractMetadata() {
-    const fileInput = document.getElementById("file");
-    const category = document.getElementById("category").value;
-    
-    if (fileInput.files.length === 0) {
-        alert("Please select a file first.");
-        return;
-    }
-    
-    // Display loading status
-    const metadataBtn = document.getElementById("metadata-btn");
-    const originalButtonText = metadataBtn.innerHTML;
-    metadataBtn.innerHTML = '<span style="display:inline-block">Processing...</span>';
-    metadataBtn.disabled = true;
-    
-    // Create a status message element
-    let statusElement = document.getElementById("metadata-status");
-    if (!statusElement) {
-        statusElement = document.createElement("div");
-        statusElement.id = "metadata-status";
-        statusElement.style.margin = "10px 0";
-        metadataBtn.parentNode.insertBefore(statusElement, metadataBtn.nextSibling);
-    }
-    statusElement.innerHTML = '<div style="color:#0066cc">Extracting metadata, please wait...</div>';
-    
-    // Convert file to base64
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function(event) {
-        const fileData = event.target.result;
-        const fileName = file.name;
-        
-        statusElement.innerHTML = '<div style="color:#0066cc">Sending to server for processing...</div>';
-        
-        // Send to server
-        fetch('/extract_metadata', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                file_data: fileData,
-                file_name: fileName,
-                category: category
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                statusElement.innerHTML = '<div style="color:green">✓ Metadata extracted and saved successfully!</div>';
-                
-                // Display a summary of the extracted metadata
-                let metadataSummary = document.createElement("div");
-                metadataSummary.style.marginTop = "10px";
-                metadataSummary.style.padding = "10px";
-                metadataSummary.style.backgroundColor = "#f0f9ff";
-                metadataSummary.style.borderRadius = "5px";
-                metadataSummary.style.border = "1px solid #cce5ff";
-                
-                let summaryHtml = `
-                    <p><strong>Summary:</strong> ${data.metadata.summary}</p>
-                    <p><strong>Document Type:</strong> ${data.metadata.document_type}</p>
-                `;
-                
-                if (data.metadata.keywords && data.metadata.keywords.length > 0) {
-                    summaryHtml += `<p><strong>Keywords:</strong> ${data.metadata.keywords.join(", ")}</p>`;
-                }
-                
-                metadataSummary.innerHTML = summaryHtml;
-                statusElement.appendChild(metadataSummary);
-                
-                let viewLink = document.createElement("a");
-                viewLink.href = "/view_metadata";
-                viewLink.textContent = "View all metadata records";
-                viewLink.style.display = "inline-block";
-                viewLink.style.marginTop = "10px";
-                viewLink.style.color = "#0066cc";
-                statusElement.appendChild(viewLink);
-                
-            } else {
-                statusElement.innerHTML = `<div style="color:red">Error: ${data.message}</div>`;
-                
-                if (data.metadata && data.metadata.summary) {
-                    statusElement.innerHTML += `<div style="margin-top:10px"><strong>Limited metadata extracted:</strong> ${data.metadata.summary}</div>`;
-                }
+            const fileInput = document.getElementById("file");
+            const category = document.getElementById("category").value;
+            
+            if (fileInput.files.length === 0) {
+                alert("Please select a file first.");
+                return;
             }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            statusElement.innerHTML = `<div style="color:red">Error communicating with server. Please try again.</div>`;
-        })
-        .finally(() => {
-            // Reset button state
-            metadataBtn.innerHTML = originalButtonText;
-            metadataBtn.disabled = false;
-        });
-    };
-    
-    reader.onerror = function() {
-        statusElement.innerHTML = `<div style="color:red">Error reading file. Please try again.</div>`;
-        metadataBtn.innerHTML = originalButtonText;
-        metadataBtn.disabled = false;
-    };
-    
-    reader.readAsDataURL(file);
-}
+            
+            // Display loading status
+            const metadataBtn = document.getElementById("metadata-btn");
+            const originalButtonText = metadataBtn.innerHTML;
+            metadataBtn.innerHTML = '<span style="display:inline-block">Processing...</span>';
+            metadataBtn.disabled = true;
+            
+            // Create a status message element
+            let statusElement = document.getElementById("metadata-status");
+            if (!statusElement) {
+                statusElement = document.createElement("div");
+                statusElement.id = "metadata-status";
+                statusElement.style.margin = "10px 0";
+                metadataBtn.parentNode.insertBefore(statusElement, metadataBtn.nextSibling);
+            }
+            statusElement.innerHTML = '<div style="color:#0066cc">Extracting metadata, please wait...</div>';
+            
+            // Convert file to base64
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const fileData = event.target.result;
+                const fileName = file.name;
+                
+                statusElement.innerHTML = '<div style="color:#0066cc">Sending to server for processing...</div>';
+                
+                // Send to server
+                fetch('/extract_metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_data: fileData,
+                        file_name: fileName,
+                        category: category
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusElement.innerHTML = '<div style="color:green">✓ Metadata extracted and saved successfully!</div>';
+                        
+                        // Display a summary of the extracted metadata
+                        let metadataSummary = document.createElement("div");
+                        metadataSummary.style.marginTop = "10px";
+                        metadataSummary.style.padding = "10px";
+                        metadataSummary.style.backgroundColor = "#f0f9ff";
+                        metadataSummary.style.borderRadius = "5px";
+                        metadataSummary.style.border = "1px solid #cce5ff";
+                        
+                        let summaryHtml = `
+                            <p><strong>Summary:</strong> ${data.metadata.summary}</p>
+                            <p><strong>Document Type:</strong> ${data.metadata.document_type}</p>
+                        `;
+                        
+                        if (data.metadata.keywords && data.metadata.keywords.length > 0) {
+                            summaryHtml += `<p><strong>Keywords:</strong> ${data.metadata.keywords.join(", ")}</p>`;
+                        }
+                        
+                        metadataSummary.innerHTML = summaryHtml;
+                        statusElement.appendChild(metadataSummary);
+                        
+                        let viewLink = document.createElement("a");
+                        viewLink.href = "/view_metadata";
+                        viewLink.textContent = "View all metadata records";
+                        viewLink.style.display = "inline-block";
+                        viewLink.style.marginTop = "10px";
+                        viewLink.style.color = "#0066cc";
+                        statusElement.appendChild(viewLink);
+                        
+                    } else {
+                        statusElement.innerHTML = `<div style="color:red">Error: ${data.message}</div>`;
+                        
+                        if (data.metadata && data.metadata.summary) {
+                            statusElement.innerHTML += `<div style="margin-top:10px"><strong>Limited metadata extracted:</strong> ${data.metadata.summary}</div>`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    statusElement.innerHTML = `<div style="color:red">Error communicating with server. Please try again.</div>`;
+                })
+                .finally(() => {
+                    // Reset button state
+                    metadataBtn.innerHTML = originalButtonText;
+                    metadataBtn.disabled = false;
+                });
+            };
+            
+            reader.onerror = function() {
+                statusElement.innerHTML = `<div style="color:red">Error reading file. Please try again.</div>`;
+                metadataBtn.innerHTML = originalButtonText;
+                metadataBtn.disabled = false;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+            
+        function verifyUploadAndExtractMetadata() {
+            // First extract metadata
+            extractMetadata();
+            
+            // Then proceed with verification and upload
+            // Small delay to ensure metadata extraction has started
+            setTimeout(() => {
+                verifyAndUpload();
+            }, 500);
+        }
     </script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlockDoc</div>
+        <ul class="nav-links">
+            <li class="active"><a href="/faculty">Dashboard</a></li>
+            <li><a href="/verify_face_page">Public Files/Docs</a></li>
+            <li><a href="/">Logout</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/view_metadata">Metadata</a></li>
+            <li><a href="/visualisation">Visualisation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Doctor/Uploader Dashboard</h1>
+        <p>Welcome, Patient Name - {{ session['username'] }}</p>
+
+        {% if circular %}
+            <p>Current Circular: {{ circular[1] }} (Posted on: {{ circular[2] }})</p>
+        {% endif %}
+        <br>
+
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-content">
+                    <h2>Public Files</h2>
+                    <p><span id="approvedCount">0</span></p>
+                </div>
+                <div class="icon">✔️</div>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="circular-form" id="uploadForm">
+            <label for="file">File:</label>
+            <input type="file" name="file" id="file" required>
+        
+            <label for="category">Category:</label>
+            <select name="category" id="category" required>
+                <option value="Diagnostic Report">Diagnostic Report</option>
+                <option value="Prescription">Prescription</option>
+                <option value="Doctor Notes">Doctor Notes</option>
+                <option value="Scanning/Lab Reports">Scanning/Lab Reports</option>
+                <option value="High Priority Notes">High Priority Notes</option>
+            </select>
+        
+            <label for="dept">Department:</label>
+            <input type="text" name="dept" id="dept" placeholder="Deptname" required>
+        
+            <button type="button" onclick="analyzeFile()">Analyze</button>
+            <button type="button" id="metadata-btn" onclick="extractMetadata()">Extract Metadata</button>
+            
+            <p id="rating">Rating: N/A</p>
+            <p id="security_score">Known Vulnerabilities: N/A</p>
+        
+            <input type="hidden" id="fileData" name="fileData">
+            <button id="incentivize" onclick="handleFileUpload(event)" type="submit" disabled>Get Incentivised [if eligible]</button>
+            <button id="upload" type="button" onclick="verifyUploadAndExtractMetadata()" disabled>Upload</button>
+        </form>
+
+        <div class="table-container">
+            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control">
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>ID</th> 
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>IPFS Link</th>
+                        <th>Approval Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.dept }}</td>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.category }}</td>
+                        <td><a href="{{ file.ipfs_hash }}" target="_blank" class="view-file-btn">View File</a></td>
+                        <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="video-container" style="display: none;">
+            <video id="video" autoplay></video>
+        </div>
+        <img id="photo" alt="Captured Photo" style="display: none;">
+
+        <h2>BlocDocCoin Balance</h2>
+        <div class="coinbox">
+            <p><img id="coinlg" src="static/bcoin.png"> Your current balance: <span id="coinBalance">0</span> BDC</p>
+        </div>
+        <button class="getbal" onclick="getBalance()">Get My Balance</button>
+
+        <button class="chatbot-btn" onclick="location.href='/chatbot'">Open Chatbot</button>
+    </div>
+
     <script>
         // Access the webcam
         const video = document.getElementById('video');
-        const captureBtn = document.getElementById('capture-btn');
         const photo = document.getElementById('photo');
     
         let capturedImageData = null;
@@ -586,34 +856,10 @@
                 console.error("Error accessing the webcam: ", err);
             });
     
-        // Capture photo from webcam
-        captureBtn.addEventListener('click', () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-            // Convert canvas image to base64
-            capturedImageData = canvas.toDataURL('image/jpeg');
-            photo.src = capturedImageData;
-            photo.style.display = 'block';
-        });
-    </script>
-    <script>
         document.getElementById('upload').addEventListener('click', () => {
             // Show the webcam section
             document.querySelector('.video-container').style.display = 'block';
         });
-        function verifyUploadAndExtractMetadata() {
-    // First extract metadata
-    extractMetadata();
-    
-    // Then proceed with verification and upload
-    // You might want to add a small delay to ensure metadata extraction has started
-    setTimeout(() => {
-        verifyAndUpload();
-    }, 500); // Small delay to ensure metadata extraction has started
-}
     </script>
 </body>
 </html>

@@ -4,8 +4,351 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Approval</title>
-    <link rel="stylesheet" href="static/docs.css">
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --accent-primary: #1a1a1a;
+            --accent-secondary: #2d2d2d;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --glow-color: rgba(0, 0, 0, 0.1);
+            --success: #2ecc71;
+            --success-hover: #27ae60;
+            --primary: #4a90e2;
+            --primary-hover: #357ae8;
+            --disabled: #cccccc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-links li a {
+            color: #a0a0a0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+        }
+        
+        h2 {
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-control {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px var(--glow-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        thead {
+            background: var(--bg-secondary);
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tbody tr:hover td {
+            color: var(--text-primary);
+        }
+        
+        .copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .view-file-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .view-file-btn:hover {
+            background: var(--accent-secondary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .incentive-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .incentive-btn:hover {
+            background: var(--success-hover);
+        }
+        
+        .research-appsub {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .research-appsub:hover {
+            background: var(--primary-hover);
+        }
+        
+        .research-appsub[disabled] {
+            background: var(--disabled);
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .nav-links li {
+                flex: 1;
+                min-width: 150px;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .table-container {
+                padding: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .incentive-btn,
+            .research-appsub {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlockDoc</div>
+        <ul class="nav-links">
+            <li class="active"><a href="/admin">Dashboard</a></li>
+            <li><a href="/docs">Documents</a></li>
+            <li><a href="/admin">Circular</a></li>
+            <li><a href="/admin">Pending Requests</a></li>
+            <li><a href="/incentive_table">Incentive Logs</a></li>
+            <li><a href="/research_approve">Approve Research</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/">Log Out</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2>Research Approval</h2>
+        <div class="table-container">
+            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control">
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>Uploader ID</th>
+                        <th>Original Uploader Username</th>
+                        <th>Timestamp</th>
+                        <th>IPFS Link</th>
+                        <th>Research Approval Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.dept }}</td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.category }}</td>
+                        <td>
+                            <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
+                                📋
+                            </button>
+                            <span style="display: none;">{{ file.uploader }}</span>
+                        </td>
+                        <td>{{ file.uploader_username }}</td>
+                        <td>{{ file.timestamp }}</td>
+                        <td><button class="view-file-btn" onclick="window.open('https://ipfs.io/ipfs/{{ file.ipfs_hash }}', '_blank')">View File</button></td>
+                        <td>{{ 'Approved' if file.research_approved else 'Pending' }}</td>
+                        <td class="action-buttons">
+                            {% if not file.research_approved %}
+                                <button class="incentive-btn" onclick="approveAndIncentivize('{{ file.id }}', '{{ file.name }}', '{{ file.uploader }}', '{{ file.dept }}')">
+                                    Approve & Incentivize
+                                </button>
+                                <form method="POST" action="/research_approve" style="display: inline;">
+                                    <input type="hidden" name="file_id" value="{{ file.id }}">
+                                    <input type="hidden" name="dept" value="{{ file.dept }}">
+                                    <button class="research-appsub" type="submit">Approve Only</button>
+                                </form>
+                            {% else %}
+                                <button class="research-appsub" disabled>Research Approved</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         function searchTable(inputId, tableId) {
             var input, filter, table, tr, td, i, j, txtValue;
@@ -37,7 +380,6 @@
             });
         }
         
-        // Initialize Web3 and Contract
         let web3;
         let contract;
 
@@ -114,67 +456,52 @@
             }
         };
         
-        // Function to incentivize the uploader when file is approved for research
-        // Simplified function to incentivize the uploader when file is approved for research
-        
         async function incentivizeForResearch(fileName, uploaderId) {
-    try {
-        if (!web3 || !contract) {
-            alert("Web3 or contract not initialized. Please connect to MetaMask.");
-            return false;
+            try {
+                if (!web3 || !contract) {
+                    alert("Web3 or contract not initialized. Please connect to MetaMask.");
+                    return false;
+                }
+
+                const accounts = await web3.eth.getAccounts();
+                if (!accounts || accounts.length === 0) {
+                    alert("No Ethereum account connected. Please unlock MetaMask.");
+                    return false;
+                }
+                
+                const currentAccount = accounts[0];
+                const dummyFileName = "RESEARCH-DOC-" + Date.now().toString();
+                const dummyFormat = "CSE-RESEARCH";
+                
+                console.log("Sending transaction with dummy parameters:", {
+                    fileName: dummyFileName,
+                    format: dummyFormat,
+                    from: currentAccount
+                });
+
+                const result = await contract.methods.uploadFile(dummyFileName, dummyFormat).send({ 
+                    from: currentAccount,
+                    gas: 500000
+                });
+                
+                console.log("Transaction successful:", result);
+                await logResearchIncentive(fileName, uploaderId);
+                alert(`Research approval incentive sent successfully for: ${fileName}`);
+                return true;
+            } catch (error) {
+                console.error("Transaction error details:", error);
+                
+                if (error.message.includes("revert")) {
+                    alert("Smart contract rejected the transaction. Please check contract conditions.");
+                } else if (error.message.includes("denied")) {
+                    alert("You rejected the transaction in MetaMask.");
+                } else {
+                    alert("Transaction failed: " + error.message);
+                }
+                return false;
+            }
         }
 
-        const accounts = await web3.eth.getAccounts();
-        if (!accounts || accounts.length === 0) {
-            alert("No Ethereum account connected. Please unlock MetaMask.");
-            return false;
-        }
-        
-        const currentAccount = accounts[0];
-        
-        // Create a standardized dummy file name that will always pass checks
-        // This ensures consistency across all research incentives
-        const dummyFileName = "RESEARCH-DOC-" + Date.now().toString();
-        
-        // Use a format that would always be accepted by the contract
-        // The format should match what's expected in the contract validation
-        const dummyFormat = "CSE-RESEARCH";
-        
-        console.log("Sending transaction with dummy parameters:", {
-            fileName: dummyFileName,
-            format: dummyFormat,
-            from: currentAccount
-        });
-
-        // Use a higher gas limit to ensure the transaction has enough gas
-        const result = await contract.methods.uploadFile(dummyFileName, dummyFormat).send({ 
-            from: currentAccount,
-            gas: 500000  // Fixed high gas limit to avoid estimation issues
-        });
-        
-        console.log("Transaction successful:", result);
-
-        // Log the actual file information on the server
-        await logResearchIncentive(fileName, uploaderId);
-
-        alert(`Research approval incentive sent successfully for: ${fileName}`);
-        return true;
-    } catch (error) {
-        console.error("Transaction error details:", error);
-        
-        if (error.message.includes("revert")) {
-            alert("Smart contract rejected the transaction. Please check contract conditions.");
-        } else if (error.message.includes("denied")) {
-            alert("You rejected the transaction in MetaMask.");
-        } else {
-            alert("Transaction failed: " + error.message);
-        }
-        return false;
-    }
-}
-
-
-        // Function to log the incentive to the server
         async function logResearchIncentive(fileName, uploaderId) {
             try {
                 const response = await fetch('/log_research_incentive', {
@@ -199,193 +526,79 @@
             }
         }
         
-        // Function to approve research and provide incentive
         async function approveAndIncentivize(fileId, fileName, uploaderId, dept) {
-    try {
-        console.log("Starting incentivization for:", {
-            fileId: fileId,
-            fileName: fileName,
-            uploaderId: uploaderId,
-            dept: dept
-        });
-        
-        // First call the contract to provide incentive
-        const incentiveSuccess = await incentivizeForResearch(fileName, uploaderId);
-        
-        if (incentiveSuccess) {
-            console.log("Incentive successful, proceeding with approval");
-            // Then submit the form for research approval
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/research_approve';
-            
-            const fileIdInput = document.createElement('input');
-            fileIdInput.type = 'hidden';
-            fileIdInput.name = 'file_id';
-            fileIdInput.value = fileId;
-            
-            const deptInput = document.createElement('input');
-            deptInput.type = 'hidden';
-            deptInput.name = 'dept';
-            deptInput.value = dept;
-            
-            const incentiveInput = document.createElement('input');
-            incentiveInput.type = 'hidden';
-            incentiveInput.name = 'incentive_provided';
-            incentiveInput.value = 'true';
-            
-            form.appendChild(fileIdInput);
-            form.appendChild(deptInput);
-            form.appendChild(incentiveInput);
-            
-            document.body.appendChild(form);
-            form.submit();
-        } else {
-            console.log("Incentive failed, not proceeding with approval");
+            try {
+                console.log("Starting incentivization for:", {
+                    fileId: fileId,
+                    fileName: fileName,
+                    uploaderId: uploaderId,
+                    dept: dept
+                });
+                
+                const incentiveSuccess = await incentivizeForResearch(fileName, uploaderId);
+                
+                if (incentiveSuccess) {
+                    console.log("Incentive successful, proceeding with approval");
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/research_approve';
+                    
+                    const fileIdInput = document.createElement('input');
+                    fileIdInput.type = 'hidden';
+                    fileIdInput.name = 'file_id';
+                    fileIdInput.value = fileId;
+                    
+                    const deptInput = document.createElement('input');
+                    deptInput.type = 'hidden';
+                    deptInput.name = 'dept';
+                    deptInput.value = dept;
+                    
+                    const incentiveInput = document.createElement('input');
+                    incentiveInput.type = 'hidden';
+                    incentiveInput.name = 'incentive_provided';
+                    incentiveInput.value = 'true';
+                    
+                    form.appendChild(fileIdInput);
+                    form.appendChild(deptInput);
+                    form.appendChild(incentiveInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    console.log("Incentive failed, not proceeding with approval");
+                }
+            } catch (error) {
+                console.error("Error in approve and incentivize process:", error);
+                alert("An error occurred during the approval process: " + error.message);
+            }
         }
-    } catch (error) {
-        console.error("Error in approve and incentivize process:", error);
-        alert("An error occurred during the approval process: " + error.message);
-    }
-}
-// Add this function to help debug contract issues
-async function debugContract() {
-    if (!web3 || !contract) {
-        console.log("Web3 or contract not initialized");
-        return;
-    }
-    
-    try {
-        const accounts = await web3.eth.getAccounts();
-        console.log("Connected account:", accounts[0]);
-        
-        const isPaused = await contract.methods.paused().call();
-        console.log("Contract paused status:", isPaused);
-        
-        const rewardRate = await contract.methods.rewardRate().call();
-        console.log("Current reward rate:", web3.utils.fromWei(rewardRate, 'ether'));
-        
-        const balance = await contract.methods.balanceOf(accounts[0]).call();
-        console.log("User BDC balance:", web3.utils.fromWei(balance, 'ether'));
-        
-        // Check user's ETH balance
-        const ethBalance = await web3.eth.getBalance(accounts[0]);
-        console.log("User ETH balance:", web3.utils.fromWei(ethBalance, 'ether'));
-        
-    } catch (error) {
-        console.error("Error debugging contract:", error);
-    }
-}
+
+        async function debugContract() {
+            if (!web3 || !contract) {
+                console.log("Web3 or contract not initialized");
+                return;
+            }
+            
+            try {
+                const accounts = await web3.eth.getAccounts();
+                console.log("Connected account:", accounts[0]);
+                
+                const isPaused = await contract.methods.paused().call();
+                console.log("Contract paused status:", isPaused);
+                
+                const rewardRate = await contract.methods.rewardRate().call();
+                console.log("Current reward rate:", web3.utils.fromWei(rewardRate, 'ether'));
+                
+                const balance = await contract.methods.balanceOf(accounts[0]).call();
+                console.log("User BDC balance:", web3.utils.fromWei(balance, 'ether'));
+                
+                const ethBalance = await web3.eth.getBalance(accounts[0]);
+                console.log("User ETH balance:", web3.utils.fromWei(ethBalance, 'ether'));
+                
+            } catch (error) {
+                console.error("Error debugging contract:", error);
+            }
+        }
     </script>
-    <style>
-        .research-appsub {
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 5px;
-        }
-
-        .research-appsub:hover {
-            background-color: #357ae8;
-        }
-
-        .research-appsub[disabled] {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        .incentive-btn {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        
-        .incentive-btn:hover {
-            background-color: #27ae60;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo">BlockDoc</div>
-        <ul class="nav-links">
-            <li class="active"><a href="/admin">Dashboard</a></li>
-            <li><a href="/docs">Documents</a></li>
-            <li><a href="/admin">Circular</a></li>
-            <li><a href="/admin">Pending Requests</a></li>
-            <li><a href="/incentive_table">Incentive Logs</a></li>
-            <li><a href="/research_approve">Approve Reseach</a></li>
-            
-            <li><a href="/chatbot">Chat</a></li>
-            <li><a href="/">Log Out</a></li>
-        </ul>
-    </div>
-
-    <div class="main-content">
-        <h2 class="mt-4">Research Approval</h2>
-        <div class="table-container">
-            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control mb-3">
-            <table class="table table-bordered" id="fileTable">
-                <thead>
-                    <tr>
-                        <th>Dept.</th>
-                        <th>File Name</th>
-                        <th>Category</th>
-                        <th>Uploader ID</th>
-                        <th>Original Uploader Username</th>
-                        <th>Timestamp</th>
-                        <th>IPFS Link</th>
-                        <th>Research Approval Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for file in files %}
-                    <tr>
-                        <td>{{ file.dept }}</td>
-                        <td>{{ file.name }}</td>
-                        <td>{{ file.category }}</td>
-                        <td>
-                            <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
-                                📋
-                            </button>
-                            <span style="display: none;">{{ file.uploader }}</span>
-                        </td>
-                        <td>{{ file.uploader_username }}</td>
-                        <td>{{ file.timestamp }}</td>
-                        <td><button class="view-file-btn" onclick="window.open('https://ipfs.io/ipfs/{{ file.ipfs_hash }}', '_blank')">View File</button></td>
-                        <td>{{ 'Approved' if file.research_approved else 'Pending' }}</td>
-                        <td class="action-buttons">
-                            {% if not file.research_approved %}
-                                <button class="incentive-btn" onclick="approveAndIncentivize('{{ file.id }}', '{{ file.name }}', '{{ file.uploader }}', '{{ file.dept }}')">
-                                    Approve & Incentivize
-                                </button>
-                                <form method="POST" action="/research_approve" style="display: inline;">
-                                    <input type="hidden" name="file_id" value="{{ file.id }}">
-                                    <input type="hidden" name="dept" value="{{ file.dept }}">
-                                    <button class="research-appsub" type="submit">Approve Only</button>
-                                </form>
-                            {% else %}
-                                <button class="research-appsub" disabled>Research Approved</button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>

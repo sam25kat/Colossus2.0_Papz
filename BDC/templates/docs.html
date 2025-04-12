@@ -4,27 +4,343 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uploaded Files</title>
-    <link rel="stylesheet" href="static/docs.css">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --accent-primary: #1a1a1a;
+            --accent-secondary: #2d2d2d;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --success: #4caf50;
+            --success-hover: #000000;
+            --primary: #000000;
+            --primary-hover: #000000;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: auto;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-links li a {
+            color: #a0a0a0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        /* Remove the duplicate table styles and fix the cell content display */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+            overflow-x: hidden;
+        }
+        
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            table-layout: fixed;
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Adjust column widths */
+        th:nth-child(1), td:nth-child(1) { width: 5%; } /* Dept */
+        th:nth-child(2), td:nth-child(2) { 
+            width: 15%; 
+            white-space: normal;
+            word-break: break-word;
+        } /* File Name */
+        th:nth-child(3), td:nth-child(3) { width: 7%; } /* Category */
+        th:nth-child(4), td:nth-child(4) { width: 4%; } /* Uploader ID */
+        th:nth-child(5), td:nth-child(5) { 
+            width: 10%; 
+            white-space: normal;
+        } /* Username */
+        th:nth-child(6), td:nth-child(6) { width: 10%; } /* Timestamp */
+        th:nth-child(7), td:nth-child(7) { width: 8%; } /* IPFS Link */
+        th:nth-child(8), td:nth-child(8) { width: 8%; } /* Approval Status */
+        th:nth-child(9), td:nth-child(9) { width: 8%; } /* Actions */
+        th:nth-child(10), td:nth-child(10) { width: 7%; } /* Visibility */
+        th:nth-child(11), td:nth-child(11) { width: 8%; } /* Retrieve File */
+        .form-control {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.25rem;
+        }
+        
+        .view-file-btn, 
+        .appsub,
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .view-file-btn:hover, 
+        .appsub:hover,
+        button:hover {
+            background: var(--primary-hover);
+        }
+        
+        .appsub {
+            background: var(--success);
+        }
+        
+        .appsub:hover {
+            background: var(--success-hover);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">BlockDoc</div>
+        <ul class="nav-links">
+            <li><a href="/admin">Dashboard</a></li>
+            <li class="active"><a href="/docs">Documents</a></li>
+            <li><a href="/admin">Circular</a></li>
+            <li><a href="/admin">Pending Requests</a></li>
+            <li><a href="/incentive_table">Incentive Logs</a></li>
+            <li><a href="/view_metadata">Metadata</a></li>
+            <li><a href="/research_approve">Approve Research</a></li>
+            <li><a href="/chatbot">Chat</a></li>
+            <li><a href="/">Log Out</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2>Uploaded Files</h2>
+        <br>
+        <div class="table-container">
+            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control">
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>Uploader ID</th>
+                        <th>Original Uploader Username</th>
+                        <th>Timestamp</th>
+                        
+                        <th>Approval Status</th>
+                        <th>Actions</th>
+                        <th>Visibility</th>
+                        <th>Retrieve File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td title="{{ file.dept }}">{{ file.dept }}</td>
+                        <td title="{{ file.name }}">{{ file.name }}</td>
+                        <td title="{{ file.category }}">{{ file.category }}</td>
+                        <td>
+                            <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
+                                📋
+                            </button>
+                        </td>
+                        <td title="{{ file.uploader_username }}">{{ file.uploader_username }}</td>
+                        <td title="{{ file.timestamp }}">{{ file.timestamp }}</td>
+                        
+                        <td title="{{ 'Approved' if file.approved else 'Pending' }}">{{ 'Approved' if file.approved else 'Pending' }}</td>
+                        <td>
+                            {% if not file.approved %}
+                            <form method="POST">
+                                <input type="hidden" name="file_id" value="{{ file.id }}">
+                                <button class="appsub" type="submit">Approve</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        <td title="{{ file.visibility }}">{{ file.visibility }}</td>
+                        <td>
+                            <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')">
+                                Retrieve
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         function searchTable(inputId, tableId) {
-            var input, filter, table, tr, td, i, j, txtValue;
-            input = document.getElementById(inputId);
-            filter = input.value.toUpperCase();
-            table = document.getElementById(tableId);
-            tr = table.getElementsByTagName("tr");
+            var input = document.getElementById(inputId);
+            var filter = input.value.toUpperCase();
+            var table = document.getElementById(tableId);
+            var tr = table.getElementsByTagName("tr");
 
-            for (i = 1; i < tr.length; i++) {
-                tr[i].style.display = "none";
-                td = tr[i].getElementsByTagName("td");
-                for (j = 0; j < td.length; j++) {
+            for (var i = 1; i < tr.length; i++) {
+                var td = tr[i].getElementsByTagName("td");
+                var display = false;
+                
+                for (var j = 0; j < td.length; j++) {
                     if (td[j]) {
-                        txtValue = td[j].textContent || td[j].innerText;
+                        var txtValue = td[j].textContent || td[j].innerText;
                         if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                            tr[i].style.display = "";
+                            display = true;
                             break;
                         }
                     }
                 }
+                
+                tr[i].style.display = display ? "" : "none";
             }
         }
 
@@ -35,91 +351,7 @@
                 console.error("Could not copy text: ", err);
             });
         }
-    </script>
-    <style>
-        
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo">BlockDoc</div>
-        <ul class="nav-links">
-            <li class="active"><a href="/admin">Dashboard</a></li>
-            <li><a href="/docs">Documents</a></li>
-            <li><a href="/admin">Circular</a></li>
-            <li><a href="/admin">Pending Requests</a></li>
-            <li><a href="/incentive_table">Incentive Logs</a></li>
-            <li><a href="/view_metadata">Metadata</a></li>
-            <li><a href="/research_approve">Approve Reseach</a></li>
-            
-            <li><a href="/chatbot">Chat</a></li>
-            <li><a href="/">Log Out</a></li>
-        </ul>
-    </div>
 
-    <div class="main-content">
-        <h2 class="mt-4">Uploaded Files</h2>
-        <div class="table-container">
-            <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control mb-3">
-            <table class="table table-bordered" id="fileTable">
-                <thead>
-                    <tr>
-                        <th>Dept.</th>
-                        <th>File Name</th>
-                        <th>Category</th>
-                        <th>Uploader ID</th>
-                        <th>Original Uploader Username</th>
-                        <th>Timestamp</th>
-                        <th>IPFS Link</th>
-                        <th>Approval Status</th>
-                        <th>Actions</th>
-                        <th>Visibility</th>
-                        <th>Retrieve File</th> <!-- New Column for Decryption -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for file in files %}
-                    <tr>
-                        <td>{{ file.dept }}</td>
-                        <td>{{ file.name }}</td>
-                        <td>{{ file.category }}</td>
-                        <td>
-                            <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
-                                📋
-                            </button>
-                        </td>
-                        
-                        <td>{{ file.uploader_username }}</td>
-                        <td>{{ file.timestamp }}</td>
-                        <td><button class="view-file-btn" onclick="window.open('https://ipfs.io/ipfs/{{ file.ipfs_hash }}', '_blank')">View File</button></td>
-                        <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
-                        <td>
-                            {% if not file.approved %}
-                            <form method="POST">
-                                <input type="hidden" name="file_id" value="{{ file.id }}">
-                                <button class="appsub" type="submit">Approve</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                        <td>{{ file.visibility }}</td>
-                        <td>
-                        
-
-                            <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')">
-                        
-                                Retrieve
-                        
-                            </button>
-                        
-                
-                    </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <script>
         function retrieveFile(ipfsHash) {
             fetch(`/retrieve/${ipfsHash}`)
                 .then(response => response.blob())

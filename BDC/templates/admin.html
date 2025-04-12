@@ -3,109 +3,439 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Dashboard</title>
-    <link rel="stylesheet" href="/static/admin.css">
-    <script>
-        function searchTable(inputId, tableId) {
-            var input, filter, table, tr, td, i, j, txtValue;
-            input = document.getElementById(inputId);
-            filter = input.value.toUpperCase();
-            table = document.getElementById(tableId);
-            tr = table.getElementsByTagName("tr");
-
-            for (i = 1; i < tr.length; i++) {
-                tr[i].style.display = "none";
-                td = tr[i].getElementsByTagName("td");
-                for (j = 0; j < td.length; j++) {
-                    if (td[j]) {
-                        txtValue = td[j].textContent || td[j].innerText;
-                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                            tr[i].style.display = "";
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        function countFiles() {
-            var table = document.getElementById("fileTable");
-            var tr = table.getElementsByTagName("tr");
-            var totalFiles = 0;
-            var approvedFiles = 0;
-            var pendingFiles = 0;
-
-            for (var i = 1; i < tr.length; i++) {
-                var approvalStatus = tr[i].getElementsByTagName("td")[7];
-                if (approvalStatus) {
-                    totalFiles++;
-                    var statusText = approvalStatus.textContent.trim();
-                    if (statusText === "Approved") {
-                        approvedFiles++;
-                    } else if (statusText === "Pending") {
-                        pendingFiles++;
-                    }
-                }
-            }
-
-            document.getElementById("totalFiles").textContent = totalFiles;
-            document.getElementById("approvedFiles").textContent = approvedFiles;
-            document.getElementById("pendingFiles").textContent = pendingFiles;
-        }
-
-        document.addEventListener("DOMContentLoaded", countFiles);
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                alert("Uploader ID copied to clipboard: " + text);
-            }, function(err) {
-                console.error("Could not copy text: ", err);
-            });
-        }
-
-        function showPopupMessage(message) {
-            if (message) {
-                alert(message);
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            var message = "{{ message }}";
-            showPopupMessage(message);
-        });
-    </script>
+    <title>BlocDoc Patient Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --accent-primary: #1a1a1a;
+            --accent-secondary: #2d2d2d;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --success: #000000;
+            --success-hover: #000000;
+            --primary: #4a90e2;
+            --primary-hover: #357abd;
+            --danger: #f44336;
+            --danger-hover: #d32f2f;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-links li a {
+            color: #a0a0a0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+        }
+        
+        h1, h2 {
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-content h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-content p {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        .icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+        
+        .circular-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .circular-section h2 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .circular-form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .circular-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+        
+        .circular-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+        
+        .circular-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .action-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .add-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .add-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .remove-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .remove-btn:hover {
+            background-color: var(--danger-hover);
+        }
+        
+        .current-circular {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .circular-date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section h2 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+        
+        th {
+            background-color: rgba(0, 0, 0, 0.03);
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        td {
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover td {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .approved {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+        
+        .pending {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+        
+        .copy-btn {
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .copy-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .ipfs-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .ipfs-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+        
+        .approval-form {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .visibility-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+        
+        .approve-btn {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .approve-btn:hover {
+            background-color: var(--success-hover);
+        }
+        
         .chatbot-btn {
             position: fixed;
-            bottom: 20px; /* Distance from the bottom */
-            right: 20px;  /* Distance from the right */
-            background-color: #4caf50;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
             color: white;
-            padding: 10px 20px;
+            padding: 1rem 1.5rem;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-            z-index: 1000; /* Ensures it stays above other elements */
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
         }
         
         .chatbot-btn:hover {
-            background-color:rgb(110, 184, 112);
+            background: var(--success-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent-secondary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: fadeInOut 2s ease;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            20% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo">BlockDoc</div>
+        <div class="logo">BlocDoc</div>
         <ul class="nav-links">
             <li class="active"><a href="/admin">Dashboard</a></li>
             <li><a href="/docs">Documents</a></li>
             <li><a href="/admin">Circular</a></li>
             <li><a href="/admin">Pending Requests</a></li>
             <li><a href="/incentive_table">Incentive Logs</a></li>
-            <li><a href="/research_approve">Approve Reseach</a></li>
+            <li><a href="/research_approve">Approve Research</a></li>
             <li><a href="/view_metadata">Metadata</a></li>
+            <li><a href="/visualisation">Visualisation</a></li>
             <li><a href="/chatbot">Chat</a></li>
             <li><a href="/">Log Out</a></li>
         </ul>
@@ -113,6 +443,8 @@
 
     <div class="main-content">
         <h1>Patient Dashboard</h1>
+        
+        <!-- Stats Cards -->
         <div class="stats-cards">
             <div class="card">
                 <div class="card-content">
@@ -137,106 +469,65 @@
             </div>
         </div>
 
+        <!-- Circular Section -->
+        <div class="circular-section">
+            <h2>Manage Circular</h2>
+            <form method="POST" action="/manage_circular" class="circular-form">
+                <textarea name="content" placeholder="Enter circular content" class="circular-textarea"></textarea>
+                <div class="circular-actions">
+                    <button type="submit" name="action" value="add" class="action-btn add-btn">Add Circular</button>
+                    <button type="submit" name="action" value="remove" class="action-btn remove-btn">Remove Circular</button>
+                </div>
+            </form>
+            {% if circular %}
+            <div class="current-circular">
+                <p>Current Circular: {{ circular[1] }}</p>
+                <p class="circular-date">Posted on: {{ circular[2] }}</p>
+            </div>
+            {% endif %}
+        </div>
 
 
 
 
 
+        <!-- Pending User Approvals Section -->
+<div class="section">
+    <h2>Pending User Approvals</h2>
+    <div class="search-container">
+        <input
+            type="text"
+            id="userSearch"
+            onkeyup="searchTable('userSearch', 'userTable')"
+            placeholder="Search users..."
+            class="search-input"
+        >
+    </div>
 
-
-
-
-
-
-
-
-         <div class="circular-form"> 
-            <form method="POST" action="/manage_circular"> <textarea name="content" placeholder="Enter circular content"></textarea> 
-                <button type="submit" name="action" value="add">Add Circular</button> 
-                <button type="submit" name="action" value="remove">Remove Circular</button> 
-            </form> {% if circular %} <p>Current Circular: {{ circular[1] }} (Posted on: {{ circular[2] }})</p> {% endif %} </div>
-
-        
-   
-   <!-- Pending User Approvals -->
-   <h2 class="mt-4">Pending User Approvals</h2>
-   <input type="text" id="userSearch" onkeyup="searchTable('userSearch', 'userTable')" placeholder="Search for users.." class="form-control mb-3">
-   <table class="table table-bordered" id="userTable">
-       <thead>
-           <tr>
-               <th>Username</th>
-               <th>Metamask Address</th>
-               <th>Actions</th>
-           </tr>
-       </thead>
-       <tbody>
-           {% for user in pending_users %}
-           <tr>
-               <td>{{ user[1] }}</td>
-               <td>{{ user[3] }}</td>
-               <td>
-                   <form method="post">
-                       <input type="hidden" name="approve_user" value="{{ user[0] }}">
-                       <button type="submit" class="btn btn-success">Approve</button>
-                   </form>
-               </td>
-           </tr>
-           {% endfor %}
-       </tbody>
-   </table>
-
-
-
-
-
-   <div class="main-content25">
-    
-    <div class="table-container">
-        <input type="text" id="fileSearch" onkeyup="searchTable('fileSearch', 'fileTable')" placeholder="Search for files.." class="form-control mb-3">
-        <table class="table table-bordered" id="fileTable">
+    <div class="table-wrapper">
+        <table id="userTable">
             <thead>
                 <tr>
-                    <th>Dept.</th>
-                    <th>File Name</th>
-                    <th>Category</th>
-                    <th>Uploader ID</th>
-                    <th>Original Uploader Username</th>
-                    <th>Timestamp</th>
-                    <th>IPFS Link</th>
-                    <th>Approval Status</th>
+                    <th>Username</th>
+                    <th>Metamask Address</th>
                     <th>Actions</th>
-                    <th>Visibility</th>
                 </tr>
             </thead>
             <tbody>
-                {% for file in files %}
+                {% for user in pending_users %}
                 <tr>
-                    <td>{{ file.dept }}</td>
-                    <td>{{ file.name }}</td>
-                    <td>{{ file.category }}</td>
+                    <td>{{ user[1] }}</td>
                     <td>
-                        <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
-                            📋
+                        <button class="copy-btn" onclick="copyToClipboard('{{ user[3] }}')">
+                            📋 Copy Address
                         </button>
                     </td>
-                    
-                    <td>{{ file.uploader_username }}</td>
-                    <td>{{ file.timestamp }}</td>
-                    <td><a href="https://ipfs.io/ipfs/{{ file.ipfs_hash }}" target="_blank">View File</a></td>
-                    <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
                     <td>
-                        {% if not file.approved %}
-                        <form method="POST">
-                            <input type="hidden" name="file_id" value="{{ file.id }}">
-                            <label for="visibility">Visibility:</label>
-                            <select name="visibility" id="visibility">
-                                <option value="Public">Public</option>
-                            </select>
-                            <button type="submit">Approve</button>
+                        <form method="post">
+                            <input type="hidden" name="approve_user" value="{{ user[0] }}">
+                            <button type="submit" class="approve-btn">Approve</button>
                         </form>
-                        {% endif %}
                     </td>
-                    <td>{{ file.visibility }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -251,8 +542,167 @@
 
 
 
-<button class="chatbot-btn" onclick="location.href='/chatbot'">Open Chatbot</button>
+        <!-- Files Section -->
+        <div class="section">
+            <h2>File Management</h2>
+            <div class="search-container">
+                <input
+                    type="text"
+                    id="fileSearch"
+                    onkeyup="searchTable('fileSearch', 'fileTable')"
+                    placeholder="Search files..."
+                    class="search-input"
+                >
+            </div>
 
+            <div class="table-wrapper">
+                <table id="fileTable">
+                    <thead>
+                        <tr>
+                            <th>Dept.</th>
+                            <th>File Name</th>
+                            <th>Category</th>
+                            <th>Uploader ID</th>
+                            <th>Original Uploader</th>
+                            <th>Timestamp</th>
+                            <th>IPFS Link</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>Visibility</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td>{{ file.dept }}</td>
+                            <td>{{ file.name }}</td>
+                            <td>{{ file.category }}</td>
+                            <td>
+                                <button class="copy-btn" onclick="copyToClipboard('{{ file.uploader }}')">
+                                    📋 Copy ID
+                                </button>
+                            </td>
+                            <td>{{ file.uploader_username }}</td>
+                            <td>{{ file.timestamp }}</td>
+                            <td>
+                                <a href="https://ipfs.io/ipfs/{{ file.ipfs_hash }}" target="_blank" class="ipfs-link">
+                                    View File
+                                </a>
+                            </td>
+                            <td>
+                                <span class="status-badge {{ 'approved' if file.approved else 'pending' }}">
+                                    {{ 'Approved' if file.approved else 'Pending' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if not file.approved %}
+                                <form method="POST" class="approval-form">
+                                    <input type="hidden" name="file_id" value="{{ file.id }}">
+                                    <select name="visibility" class="visibility-select">
+                                        <option value="Public">Public</option>
+                                    </select>
+                                    <button type="submit" class="approve-btn">Approve</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                            <td>{{ file.visibility }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chatbot Button -->
+        <button onclick="location.href='/chatbot'" class="chatbot-btn">
+            Open Chatbot
+        </button>
     </div>
+
+    <script>
+        function searchTable(inputId, tableId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+                let isVisible = false;
+                const cells = rows[i].getElementsByTagName("td");
+                
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j]) {
+                        const txtValue = cells[j].textContent || cells[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            isVisible = true;
+                            break;
+                        }
+                    }
+                }
+                rows[i].style.display = isVisible ? "" : "none";
+            }
+        }
+
+        function countFiles() {
+            const table = document.getElementById("fileTable");
+            const rows = table.getElementsByTagName("tr");
+            let totalFiles = 0;
+            let approvedFiles = 0;
+            let pendingFiles = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].style.display !== "none") {
+                    const approvalStatus = rows[i].getElementsByTagName("td")[7];
+                    if (approvalStatus) {
+                        totalFiles++;
+                        const statusText = approvalStatus.textContent.trim();
+                        if (statusText === "Approved") {
+                            approvedFiles++;
+                        } else if (statusText === "Pending") {
+                            pendingFiles++;
+                        }
+                    }
+                }
+            }
+
+            document.getElementById("totalFiles").textContent = totalFiles;
+            document.getElementById("approvedFiles").textContent = approvedFiles;
+            document.getElementById("pendingFiles").textContent = pendingFiles;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    const notification = document.createElement('div');
+                    notification.className = 'copy-notification';
+                    notification.textContent = 'Uploader ID copied to clipboard!';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Could not copy text: ", err);
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            countFiles();
+            
+            // Check for messages
+            const message = "{{ message }}";
+            if (message && message.trim() !== "" && message !== "{{ message }}") {
+                const notification = document.createElement('div');
+                notification.className = 'copy-notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        });
+    </script>
 </body>
 </html>

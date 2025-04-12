@@ -142,52 +142,48 @@
             <li><a href="/chatbot">Chat</a></li>
         </ul>
     </div>
-    <div class="table-container">
-        <input
-            type="text"
-            id="fileSearch"
-            onkeyup="searchTable('fileSearch', 'fileTable')"
-            placeholder="Search for files.."
-            class="search-input"
-        >
-        <table id="fileTable">
-            <thead>
-                <tr>
-                    <th>Dept.</th>
-                    <th>ID</th>
-                    <th>File Name</th>
-                    <th>Category</th>
-                    <th>IPFS Link</th>
-                    <th>Approval Status</th>
-                    <th>Retrieve File</th> <!-- New Column for Decryption -->
-
-                </tr>
-            </thead>
-            <tbody>
-                {% for file in files %}
-                <tr>
-                    <td>{{ file.dept }}</td>
-                    <td>{{ file.id }}</td>
-                    <td>{{ file.name }}</td>
-                    <td>{{ file.category }}</td>
-                    <td><a href="{{ file.ipfs_hash }}" target="_blank">View File</a></td>
-                    <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
-                    <td>
-                        
-
+    <div class="main-content">
+        <div class="search-container">
+            <input
+                type="text"
+                id="fileSearch"
+                onkeyup="searchTable('fileSearch', 'fileTable')"
+                placeholder="Search for files.."
+                class="search-input"
+            >
+        </div>
+        <div class="table-wrapper">
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>Dept.</th>
+                        <th>ID</th>
+                        <th>File Name</th>
+                        <th>Category</th>
+                        <th>IPFS Link</th>
+                        <th>Approval Status</th>
+                        <th>Retrieve File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.dept }}</td>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.category }}</td>
+                        <td><a href="{{ file.ipfs_hash }}" target="_blank">View File</a></td>
+                        <td>{{ 'Approved' if file.approved else 'Pending' }}</td>
+                        <td>
                             <button onclick="retrieveFile('{{ file.ipfs_hash.split('/')[-1] }}')">
-                        
                                 Retrieve
-                        
                             </button>
-                        
-                
-                    </td>
-
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
         function retrieveFile(ipfsHash) {
@@ -208,3 +204,323 @@
 
 </body>
 </html>
+<style>
+    :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f8f8;
+        --accent-primary: #1a1a1a;
+        --accent-secondary: #2d2d2d;
+        --text-primary: #1a1a1a;
+        --text-secondary: #666666;
+        --border-color: rgba(0, 0, 0, 0.1);
+        --glow-color: rgba(0, 0, 0, 0.1);
+        --success: #4caf50;
+        --success-hover: #45a049;
+        --primary: #4a90e2;
+        --primary-hover: #357abd;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    }
+    
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        display: flex;
+        overflow-x: hidden;
+    }
+    
+    /* Stars Background - keeping but making invisible */
+    .stars {
+        display: none;
+    }
+    
+    /* Hologram Grid - keeping but making invisible */
+    .hologram-grid {
+        display: none;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        width: 250px;
+        background: rgba(8, 8, 8, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        position: fixed;
+        height: 100vh;
+        z-index: 10;
+    }
+    
+    .logo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, #ffffff, #e0e0e0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .nav-links {
+        list-style: none;
+    }
+    
+    .nav-link {
+        color: #a0a0a0;
+        text-decoration: none;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        display: block;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .nav-indicator {
+        display: none;
+    }
+    
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        margin-left: 250px;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+        width: calc(100% - 250px);
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    /* Search Input */
+    .search-container {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        max-width: 400px;
+        padding: 0.75rem 1rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--glow-color);
+    }
+    
+    .search-border {
+        display: none;
+    }
+    
+    /* Filter Buttons */
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+    
+    .filter-btn:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    /* Table Styles */
+    .table-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        padding: 1.5rem;
+        width: 100%;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        table-layout: fixed;
+    }
+    
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        margin-left: 250px;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+        width: calc(100% - 250px);
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    /* Search Container */
+    .search-container {
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    th {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+    
+    tr:nth-child(even) {
+        background-color: var(--bg-secondary);
+    }
+    
+    tr:hover td {
+        background: rgba(0, 0, 0, 0.05);
+        color: var(--text-primary);
+    }
+    
+    /* Form Styles */
+    .form-container {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--glow-color);
+    }
+    
+    button, .btn {
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    button:hover, .btn:hover {
+        background: var(--accent-secondary);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .sidebar {
+            width: 200px;
+        }
+        
+        .main-content {
+            margin-left: 200px;
+            width: calc(100% - 200px);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+        }
+    
+        .main-content {
+            margin-left: 0;
+            width: 100%;
+            padding: 1rem;
+            height: calc(100vh - 200px);
+        }
+    
+        .logo {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+    
+        .nav-links {
+            flex-direction: row;
+            justify-content: center;
+        }
+    
+        .table-wrapper {
+            overflow-x: auto;
+        }
+    }
+</style>
