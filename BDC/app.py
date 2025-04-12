@@ -2532,7 +2532,7 @@ def visualisation():
                 except Exception as e:
                     current_app.logger.error(f"Gemini Error: {e}")
                     affected_parts = []
-
+            print(affected_parts)
             # Render final result
             return render_template(
                 'visualisation.html',
